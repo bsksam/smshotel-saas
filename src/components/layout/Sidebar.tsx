@@ -38,10 +38,16 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-zinc-200/60">
-        <button className="flex w-full items-center gap-3 px-3 py-2.5 text-zinc-600 rounded-lg hover:bg-zinc-100 hover:text-zinc-950 transition-all duration-200">
-          <LogOut className="w-4 h-4" />
-          <span className="font-medium text-sm">Sign Out</span>
-        </button>
+        <form action={async () => {
+          "use server"
+          const { signOut } = await import("@/lib/auth");
+          await signOut();
+        }}>
+          <button type="submit" className="flex w-full items-center gap-3 px-3 py-2.5 text-zinc-600 rounded-lg hover:bg-zinc-100 hover:text-zinc-950 transition-all duration-200">
+            <LogOut className="w-4 h-4" />
+            <span className="font-medium text-sm">Sign Out</span>
+          </button>
+        </form>
       </div>
     </aside>
   );
