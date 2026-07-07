@@ -1,9 +1,30 @@
 "use client";
 import { useState } from "react";
-import { Search, Filter, Plus, X } from "lucide-react";
+import { Search, Filter, Plus, X, Loader2 } from "lucide-react";
+import { createUser } from "@/actions/admin";
+import { Role } from "@prisma/client";
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    
+    const formData = new FormData(e.currentTarget);
+    const result = await createUser(formData);
+    
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      setIsModalOpen(false);
+      window.location.reload(); 
+    }
+    setIsLoading(false);
+  }
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -44,42 +65,51 @@ export default function UsersPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl border border-zinc-200/60 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-zinc-200/60 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
               <h3 className="font-bold text-zinc-900 tracking-tight">Create System User</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                  {error}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">First Name</label>
-                  <input type="text" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="John" />
+                  <input required name="firstName" type="text" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="John" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Last Name</label>
-                  <input type="text" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="Doe" />
+                  <input name="lastName" type="text" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="Doe" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Email Address</label>
-                <input type="email" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="john@smshotel.com" />
+                <input required name="email" type="email" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="john@smshotel.com" />
+                <p className="text-[10px] text-zinc-400 mt-1">Default password will be 'password123'.</p>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">System Role</label>
-                <select className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
-                  <option>SUPER_ADMIN</option>
-                  <option>SUPPORT_STAFF</option>
-                  <option>BILLING_ADMIN</option>
+                <select required name="role" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                  <option value={Role.SUPER_ADMIN}>SUPER_ADMIN</option>
+                  <option value={Role.SUPPORT_STAFF}>SUPPORT_STAFF</option>
+                  <option value={Role.BILLING_ADMIN}>BILLING_ADMIN</option>
                 </select>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3 bg-zinc-50/50">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 font-medium text-sm text-zinc-600 hover:text-zinc-900 transition-colors">Cancel</button>
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 font-medium text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors shadow-sm">Create User</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 font-medium text-sm text-zinc-600 hover:text-zinc-900 transition-colors">Cancel</button>
+              <button disabled={isLoading} type="submit" className="flex items-center gap-2 px-4 py-2 font-medium text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50">
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Create User
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>

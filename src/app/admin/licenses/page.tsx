@@ -1,9 +1,29 @@
 "use client";
 import { useState } from "react";
-import { Plus, Search, Filter, X } from "lucide-react";
+import { Plus, Search, Filter, X, Loader2 } from "lucide-react";
+import { generateLicense } from "@/actions/admin";
 
 export default function LicensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    
+    const formData = new FormData(e.currentTarget);
+    const result = await generateLicense(formData);
+    
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      setIsModalOpen(false);
+      window.location.reload(); 
+    }
+    setIsLoading(false);
+  }
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -50,22 +70,20 @@ export default function LicensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className="hover:bg-zinc-50/50 transition-colors">
-                  <td className="px-6 py-4 font-semibold text-zinc-900">Royal Palace Hotel</td>
-                  <td className="px-6 py-4 font-mono text-xs text-zinc-500 bg-zinc-50/50 rounded inline-block mt-2">A1B2-C3D4-E5F6-G7H8</td>
-                  <td className="px-6 py-4 font-medium">YEARLY</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      Active
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-zinc-500">Dec 31, 2026</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-zinc-600 hover:text-zinc-900 font-medium transition-colors">Manage</button>
-                  </td>
-                </tr>
-              ))}
+              <tr className="hover:bg-zinc-50/50 transition-colors">
+                <td className="px-6 py-4 font-semibold text-zinc-900">Royal Palace Hotel</td>
+                <td className="px-6 py-4 font-mono text-xs text-zinc-500 bg-zinc-50/50 rounded inline-block mt-2">A1B2-C3D4-E5F6-G7H8</td>
+                <td className="px-6 py-4 font-medium">YEARLY</td>
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Active
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-zinc-500">Dec 31, 2026</td>
+                <td className="px-6 py-4 text-right">
+                  <button className="text-zinc-600 hover:text-zinc-900 font-medium transition-colors">Manage</button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -73,35 +91,42 @@ export default function LicensesPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl border border-zinc-200/60 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-zinc-200/60 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
               <h3 className="font-bold text-zinc-900 tracking-tight">Generate License</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                  {error}
+                </div>
+              )}
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Select Hotel</label>
-                <select className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
-                  <option>Grand Taj Hotel</option>
-                  <option>Royal Palace Hotel</option>
-                </select>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Tenant ID</label>
+                <input required name="tenantId" type="text" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="Paste Tenant ID here" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Validity Period</label>
-                <select className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
-                  <option>1 Year (Yearly)</option>
-                  <option>6 Months (Half-Yearly)</option>
-                  <option>1 Month (Monthly)</option>
+                <select required name="validity" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                  <option value="YEARLY">1 Year (Yearly)</option>
+                  <option value="HALF_YEARLY">6 Months (Half-Yearly)</option>
+                  <option value="QUARTERLY">3 Months (Quarterly)</option>
+                  <option value="MONTHLY">1 Month (Monthly)</option>
+                  <option value="LIFETIME">Lifetime</option>
                 </select>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3 bg-zinc-50/50">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 font-medium text-sm text-zinc-600 hover:text-zinc-900 transition-colors">Cancel</button>
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 font-medium text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors shadow-sm">Generate Key</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 font-medium text-sm text-zinc-600 hover:text-zinc-900 transition-colors">Cancel</button>
+              <button disabled={isLoading} type="submit" className="flex items-center gap-2 px-4 py-2 font-medium text-sm bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50">
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Generate Key
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>
