@@ -23,12 +23,12 @@ async function main() {
 
   // 2. Create a demo Tenant (Hotel)
   const tenant = await prisma.tenant.upsert({
-    where: { subdomain: 'demo' },
+    where: { domain: 'demo' },
     update: {},
     create: {
       name: 'Grand Taj Hotel',
-      subdomain: 'demo',
-      status: 'ACTIVE',
+      domain: 'demo',
+      isActive: true,
     },
   })
   console.log(`Created Demo Hotel: ${tenant.name}`)
@@ -41,7 +41,7 @@ async function main() {
       email: 'manager@demo.com',
       name: 'Hotel Manager',
       password: hashedPassword,
-      role: 'HOTEL_OWNER',
+      role: 'MANAGER',
       tenantId: tenant.id,
     },
   })
@@ -60,9 +60,9 @@ async function main() {
   // 5. Create some Rooms
   await prisma.room.createMany({
     data: [
-      { tenantId: tenant.id, roomNumber: '101', roomTypeId: deluxeType.id, floor: '1st' },
-      { tenantId: tenant.id, roomNumber: '105', roomTypeId: deluxeType.id, floor: '1st' },
-      { tenantId: tenant.id, roomNumber: '106', roomTypeId: deluxeType.id, floor: '1st' },
+      { tenantId: tenant.id, number: '101', roomTypeId: deluxeType.id, floor: '1st' },
+      { tenantId: tenant.id, number: '105', roomTypeId: deluxeType.id, floor: '1st' },
+      { tenantId: tenant.id, number: '106', roomTypeId: deluxeType.id, floor: '1st' },
     ]
   })
   console.log("Created Rooms and Room Types")
