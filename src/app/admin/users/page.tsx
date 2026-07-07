@@ -162,8 +162,8 @@ export default function UsersPage() {
                   <select required name="role" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
                     <option value={Role.SUPER_ADMIN}>SUPER_ADMIN</option>
                     <option value={Role.HOTEL_OWNER}>HOTEL_OWNER</option>
-                    <option value={Role.SUPPORT_STAFF}>SUPPORT_STAFF</option>
-                    <option value={Role.BILLING_ADMIN}>BILLING_ADMIN</option>
+                    <option value={Role.MANAGER}>MANAGER</option>
+                    <option value={Role.ACCOUNTANT}>ACCOUNTANT</option>
                   </select>
                 </div>
                 <div>
