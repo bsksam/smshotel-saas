@@ -11,32 +11,36 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r h-screen flex flex-col fixed top-0 left-0">
-      <div className="h-16 flex items-center px-6 border-b">
-        <h1 className="text-xl font-bold text-blue-600">SMSHOTEL</h1>
-        <span className="ml-2 text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-800 rounded-full">SAAS</span>
+    <aside className="w-64 bg-white/50 backdrop-blur-xl border-r border-zinc-200 h-screen flex flex-col fixed top-0 left-0">
+      <div className="h-16 flex items-center px-6 border-b border-zinc-200/60">
+        <div className="w-8 h-8 bg-zinc-950 rounded-lg flex items-center justify-center mr-3">
+          <span className="text-white font-bold text-sm tracking-tighter">SH</span>
+        </div>
+        <h1 className="text-lg font-bold text-zinc-900 tracking-tight">SMSHOTEL</h1>
+        <span className="ml-2 text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-zinc-100 text-zinc-600 rounded-md border border-zinc-200">SAAS</span>
       </div>
       
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+        <p className="px-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Administration</p>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               key={item.name}
               href={item.href}
-              className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 text-zinc-600 rounded-lg hover:bg-zinc-100/80 hover:text-zinc-950 transition-all duration-200"
             >
-              <Icon className="w-5 h-5" />
-              <span className="font-medium">{item.name}</span>
+              <Icon className="w-4 h-4" />
+              <span className="font-medium text-sm">{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t">
-        <button className="flex w-full items-center gap-3 px-3 py-2 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors">
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Sign Out</span>
+      <div className="p-4 border-t border-zinc-200/60">
+        <button className="flex w-full items-center gap-3 px-3 py-2.5 text-zinc-600 rounded-lg hover:bg-zinc-100 hover:text-zinc-950 transition-all duration-200">
+          <LogOut className="w-4 h-4" />
+          <span className="font-medium text-sm">Sign Out</span>
         </button>
       </div>
     </aside>
