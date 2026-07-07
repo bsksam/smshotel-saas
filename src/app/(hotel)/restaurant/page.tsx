@@ -1,168 +1,337 @@
-import { Search, Plus, Coffee, Utensils, Printer, Receipt } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Coffee, Plus, Search, Loader2, Utensils, ReceiptText, ChevronRight, X } from "lucide-react";
+import { getTables, addTable, getMenuCategories, addMenuCategory, addMenuItem, getActiveOrders, createRestOrder, addItemToOrder, billOrder } from "@/actions/hotel";
 
 export default function RestaurantPOS() {
-  const tables = [
-    { id: "T1", name: "Table 1", status: "AVAILABLE", capacity: 4 },
-    { id: "T2", name: "Table 2", status: "OCCUPIED", capacity: 4, amount: 1250 },
-    { id: "T3", name: "Table 3", status: "AVAILABLE", capacity: 2 },
-    { id: "F1", name: "Family 1", status: "OCCUPIED", capacity: 8, amount: 4500 },
-  ];
+  const [tables, setTables] = useState<any[]>([]);
+  const [menu, setMenu] = useState<any[]>([]);
+  const [activeOrders, setActiveOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const menuCategories = ["All", "Starters", "Main Course", "Breads", "Desserts", "Beverages"];
-  
-  const menuItems = [
-    { name: "Paneer Tikka", price: 280, veg: true, category: "Starters" },
-    { name: "Chicken Kabab", price: 350, veg: false, category: "Starters" },
-    { name: "Dal Makhani", price: 220, veg: true, category: "Main Course" },
-    { name: "Butter Naan", price: 45, veg: true, category: "Breads" },
-  ];
+  // Modals state
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [selectedTableForOrder, setSelectedTableForOrder] = useState<string | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    setIsLoading(true);
+    try {
+      const [tRes, mRes, oRes] = await Promise.all([
+        getTables(),
+        getMenuCategories(),
+        getActiveOrders()
+      ]);
+      if (tRes.success) setTables(tRes.data);
+      if (mRes.success) setMenu(mRes.data);
+      if (oRes.success) setActiveOrders(oRes.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Handle Form Submissions
+  async function handleAddTable(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.currentTarget;
+    const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+    await addTable(name);
+    setIsTableModalOpen(false);
+    setIsSubmitting(false);
+    loadData();
+  }
+
+  async function handleAddCategory(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.currentTarget;
+    const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+    await addMenuCategory(name);
+    setIsCategoryModalOpen(false);
+    setIsSubmitting(false);
+    loadData();
+  }
+
+  async function handleAddMenuItem(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    await addMenuItem(formData);
+    setIsMenuModalOpen(false);
+    setIsSubmitting(false);
+    loadData();
+  }
+
+  async function handleOpenOrder(tableId: string) {
+    setIsSubmitting(true);
+    await createRestOrder(tableId);
+    setIsSubmitting(false);
+    loadData();
+  }
+
+  async function handleAddItemToOrder(orderId: string, menuItemId: string, price: number) {
+    await addItemToOrder(orderId, menuItemId, 1, price);
+    loadData(); // refresh active orders
+  }
+
+  async function handleBillOrder(orderId: string) {
+    if (confirm("Bill this order and free up the table?")) {
+      await billOrder(orderId);
+      loadData();
+    }
+  }
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-6">
-      {/* Left Panel: Tables & Menu */}
-      <div className="flex-1 flex flex-col gap-6">
-        <div className="bg-white rounded-xl border p-4 shadow-sm flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bold text-gray-900">Dining Tables</h3>
-            <div className="flex gap-2">
-              <span className="flex items-center gap-1 text-xs font-medium text-gray-600"><div className="w-3 h-3 rounded-full bg-green-500"></div> Available</span>
-              <span className="flex items-center gap-1 text-xs font-medium text-gray-600"><div className="w-3 h-3 rounded-full bg-red-500"></div> Occupied</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {tables.map(table => (
-              <button 
-                key={table.id}
-                className={`p-3 rounded-lg border-2 text-left transition-all ${
-                  table.status === 'AVAILABLE' 
-                  ? 'border-green-200 bg-green-50 hover:border-green-400' 
-                  : 'border-red-200 bg-red-50 hover:border-red-400 ring-2 ring-red-500 ring-offset-1'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <span className="font-bold text-gray-900">{table.name}</span>
-                  <Utensils className={`w-4 h-4 ${table.status === 'AVAILABLE' ? 'text-green-600' : 'text-red-600'}`} />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Cap: {table.capacity}</p>
-                {table.amount && <p className="text-sm font-bold text-gray-900 mt-2">₹{table.amount}</p>}
-              </button>
-            ))}
-          </div>
+    <div className="space-y-6 pb-12">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
+            <Utensils className="w-6 h-6" />
+            Restaurant POS
+          </h2>
+          <p className="text-zinc-500 mt-1 text-sm">Manage dining tables, menus, and KOTs.</p>
         </div>
-
-        <div className="bg-white rounded-xl border shadow-sm flex-1 flex flex-col overflow-hidden">
-          <div className="p-4 border-b flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search menu items..." 
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
-          </div>
-          <div className="flex overflow-x-auto p-2 border-b gap-2 scrollbar-hide">
-            {menuCategories.map(cat => (
-              <button key={cat} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium ${cat === 'All' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                {cat}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {menuItems.map(item => (
-              <div key={item.name} className="flex justify-between items-center p-3 border rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer group">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 border-2 flex items-center justify-center ${item.veg ? 'border-green-600' : 'border-red-600'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${item.veg ? 'bg-green-600' : 'bg-red-600'}`}></div>
-                    </div>
-                    <span className="font-semibold text-gray-800 text-sm">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900 mt-1 block">₹{item.price}</span>
-                </div>
-                <button className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel: KOT & Billing */}
-      <div className="w-full md:w-96 bg-white rounded-xl border shadow-sm flex flex-col h-full overflow-hidden">
-        <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-          <div>
-            <h3 className="font-bold text-gray-900">Current Order</h3>
-            <p className="text-xs text-blue-600 font-semibold mt-0.5">Table 2 • Dine In</p>
-          </div>
-          <button className="text-gray-500 hover:text-gray-800 text-sm font-medium underline">
-            Change
+        <div className="flex gap-3">
+          <button onClick={() => setIsTableModalOpen(true)} className="flex items-center gap-2 bg-white border border-zinc-200 text-zinc-700 px-4 py-2 rounded-lg hover:bg-zinc-50 transition-colors font-medium text-sm shadow-sm">
+            Add Table
+          </button>
+          <button onClick={() => setIsCategoryModalOpen(true)} className="flex items-center gap-2 bg-white border border-zinc-200 text-zinc-700 px-4 py-2 rounded-lg hover:bg-zinc-50 transition-colors font-medium text-sm shadow-sm">
+            Add Menu Category
+          </button>
+          <button onClick={() => setIsMenuModalOpen(true)} className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg hover:bg-zinc-800 transition-colors font-medium text-sm shadow-sm">
+            <Plus className="w-4 h-4" />
+            Add Menu Item
           </button>
         </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="font-semibold text-gray-800 text-sm">Paneer Tikka</p>
-              <p className="text-xs text-gray-500">₹280 x 2</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                <button className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 font-bold">-</button>
-                <span className="w-4 text-center text-sm font-bold">2</span>
-                <button className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 font-bold">+</button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Side: Tables */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6">
+            <h3 className="text-lg font-bold text-zinc-900 tracking-tight mb-6">Dining Tables</h3>
+            {isLoading ? (
+              <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-zinc-300" /></div>
+            ) : tables.length === 0 ? (
+              <p className="text-sm text-zinc-500 text-center py-4">No tables added yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {tables.map(table => {
+                  const isOccupied = table.status === "OCCUPIED";
+                  return (
+                    <button
+                      key={table.id}
+                      onClick={() => !isOccupied && handleOpenOrder(table.id)}
+                      disabled={isOccupied}
+                      className={`relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all ${
+                        isOccupied 
+                          ? "border-amber-200 bg-amber-50 cursor-not-allowed" 
+                          : "border-zinc-200 hover:border-zinc-900 hover:shadow-md bg-white cursor-pointer"
+                      }`}
+                    >
+                      <Coffee className={`w-8 h-8 mb-2 ${isOccupied ? "text-amber-500" : "text-zinc-400"}`} />
+                      <span className="font-bold text-zinc-900">{table.name}</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider mt-1 px-2 py-0.5 rounded-full ${
+                        isOccupied ? "bg-amber-200 text-amber-800" : "bg-zinc-100 text-zinc-500"
+                      }`}>
+                        {table.status}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <p className="font-bold text-gray-900 text-sm w-12 text-right">₹560</p>
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="font-semibold text-gray-800 text-sm">Butter Naan</p>
-              <p className="text-xs text-gray-500">₹45 x 4</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                <button className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 font-bold">-</button>
-                <span className="w-4 text-center text-sm font-bold">4</span>
-                <button className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 font-bold">+</button>
-              </div>
-              <p className="font-bold text-gray-900 text-sm w-12 text-right">₹180</p>
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 border-t space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Subtotal</span>
-            <span className="font-semibold text-gray-800">₹740.00</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">CGST (2.5%)</span>
-            <span className="font-semibold text-gray-800">₹18.50</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">SGST (2.5%)</span>
-            <span className="font-semibold text-gray-800">₹18.50</span>
-          </div>
-          <div className="pt-3 border-t flex justify-between items-center">
-            <span className="font-bold text-gray-900">Total</span>
-            <span className="font-bold text-2xl text-blue-600">₹777.00</span>
+        {/* Right Side: Active Orders */}
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm flex flex-col max-h-[800px]">
+          <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
+            <h3 className="text-lg font-bold text-zinc-900 tracking-tight flex items-center gap-2">
+              <ReceiptText className="w-5 h-5 text-zinc-500" />
+              Active Orders
+            </h3>
           </div>
           
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            <button className="flex items-center justify-center gap-2 bg-orange-100 text-orange-700 py-3 rounded-lg hover:bg-orange-200 font-bold text-sm transition-colors">
-              <Printer className="w-4 h-4" />
-              Print KOT
-            </button>
-            <button className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-bold text-sm transition-colors shadow-sm">
-              <Receipt className="w-4 h-4" />
-              Generate Bill
-            </button>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {isLoading ? (
+               <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-zinc-300" /></div>
+            ) : activeOrders.length === 0 ? (
+              <p className="text-sm text-zinc-500 text-center py-8">No active dine-in orders.</p>
+            ) : (
+              activeOrders.map(order => (
+                <div key={order.id} className="border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-zinc-900 text-white p-3 flex justify-between items-center">
+                    <span className="font-bold">{order.table?.name}</span>
+                    <span className="text-xs font-mono bg-white/20 px-2 py-0.5 rounded">#{order.id.slice(-5)}</span>
+                  </div>
+                  
+                  <div className="p-3 bg-zinc-50/50 max-h-48 overflow-y-auto">
+                    {order.items.length === 0 ? (
+                      <p className="text-xs text-zinc-500 text-center italic py-2">No items added.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {order.items.map((item: any) => (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span className="text-zinc-700"><span className="text-zinc-400 mr-1">{item.quantity}x</span> {item.menuItem?.name}</span>
+                            <span className="font-mono text-zinc-900">${(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-3 border-t border-zinc-200 bg-white space-y-3">
+                    <div className="flex justify-between font-bold text-zinc-900">
+                      <span>Total</span>
+                      <span>${order.totalAmount.toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => { setSelectedTableForOrder(order.id); setIsOrderModalOpen(true); }}
+                        className="text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-800 py-2 rounded-lg transition-colors"
+                      >
+                        + Add Items
+                      </button>
+                      <button 
+                        onClick={() => handleBillOrder(order.id)}
+                        disabled={order.items.length === 0}
+                        className="text-xs font-bold bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        Bill & Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
+
+      {/* Modals for Add Table, Add Category, Add Menu Item */}
+      {isTableModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-100">
+              <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Add Dining Table</h3>
+              <button onClick={() => setIsTableModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleAddTable} className="p-6">
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Table Name/Number</label>
+              <input required name="name" type="text" placeholder="E.g. Table 1" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+              <button disabled={isSubmitting} type="submit" className="mt-6 w-full px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors">Save Table</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-100">
+              <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Add Menu Category</h3>
+              <button onClick={() => setIsCategoryModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleAddCategory} className="p-6">
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Category Name</label>
+              <input required name="name" type="text" placeholder="E.g. Main Course" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+              <button disabled={isSubmitting} type="submit" className="mt-6 w-full px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors">Save Category</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isMenuModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-100">
+              <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Add Menu Item</h3>
+              <button onClick={() => setIsMenuModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleAddMenuItem} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Category</label>
+                <select required name="categoryId" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                  <option value="">Select Category</option>
+                  {menu.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Item Name</label>
+                <input required name="name" type="text" placeholder="E.g. Margherita Pizza" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Price ($)</label>
+                  <input required name="price" type="number" step="0.01" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Dietary</label>
+                  <select name="isVeg" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                    <option value="true">Vegetarian</option>
+                    <option value="false">Non-Veg</option>
+                  </select>
+                </div>
+              </div>
+              <button disabled={isSubmitting || menu.length === 0} type="submit" className="mt-4 w-full px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors">Save Item</button>
+              {menu.length === 0 && <p className="text-xs text-red-500 text-center mt-2">Add a category first.</p>}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Items to Order POS Modal */}
+      {isOrderModalOpen && selectedTableForOrder && (
+        <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-100">
+              <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Add Items to Order</h3>
+              <button onClick={() => setIsOrderModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50">
+              {menu.map(category => (
+                <div key={category.id} className="mb-8">
+                  <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-wider mb-4 border-b border-zinc-200 pb-2">{category.name}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {category.items?.map((item: any) => (
+                      <button 
+                        key={item.id}
+                        onClick={() => handleAddItemToOrder(selectedTableForOrder, item.id, item.price)}
+                        className="flex justify-between items-center p-4 rounded-xl border border-zinc-200 bg-white hover:border-zinc-900 hover:shadow-md transition-all text-left"
+                      >
+                        <div>
+                          <p className="font-semibold text-zinc-900">{item.name}</p>
+                          <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1">
+                            <span className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                            {item.isVeg ? 'Veg' : 'Non-Veg'}
+                          </p>
+                        </div>
+                        <span className="font-bold text-zinc-900">${item.price.toFixed(2)}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {(!category.items || category.items.length === 0) && <p className="text-sm text-zinc-400 italic">No items in this category.</p>}
+                </div>
+              ))}
+              {menu.length === 0 && <p className="text-center text-zinc-500 mt-10">Your menu is empty. Add categories and items first.</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

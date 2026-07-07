@@ -486,3 +486,346 @@ export async function recordPayment(data: FormData) {
     return { error: error.message || "Failed to record payment." };
   }
 }
+
+// -----------------------------------------------------------------------------
+// HOUSEKEEPING
+// -----------------------------------------------------------------------------
+
+export async function getHousekeepingTasks() {
+  try {
+    const tenantId = await getTenantId();
+    const tasks = await prisma.housekeepingTask.findMany({
+      where: { tenantId },
+      include: { room: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: tasks };
+  } catch (error: any) {
+    console.error("Failed to fetch tasks:", error);
+    return { error: error.message || "Failed to fetch tasks." };
+  }
+}
+
+export async function createHousekeepingTask(data: FormData) {
+  try {
+    const tenantId = await getTenantId();
+    const roomId = data.get("roomId") as string;
+    const taskType = data.get("taskType") as string;
+    const notes = data.get("notes") as string;
+
+    if (!roomId || !taskType) {
+      return { error: "Room ID and Task Type are required." };
+    }
+
+    const task = await prisma.housekeepingTask.create({
+      data: {
+        tenantId,
+        roomId,
+        taskType,
+        notes,
+        status: "PENDING"
+      }
+    });
+
+    revalidatePath("/housekeeping");
+    return { success: true, data: task };
+  } catch (error: any) {
+    console.error("Failed to create task:", error);
+    return { error: error.message || "Failed to create task." };
+  }
+}
+
+export async function updateTaskStatus(taskId: string, newStatus: string) {
+  try {
+    const tenantId = await getTenantId();
+    const updated = await prisma.housekeepingTask.update({
+      where: { id: taskId, tenantId },
+      data: { status: newStatus as any }
+    });
+
+    // If task is completed and it's a cleaning task, update the room to AVAILABLE
+    if (newStatus === "COMPLETED" && updated.taskType === "CLEANING") {
+      await prisma.room.update({
+        where: { id: updated.roomId },
+        data: { status: "AVAILABLE" }
+      });
+      revalidatePath("/rooms");
+    }
+
+    revalidatePath("/housekeeping");
+    return { success: true, data: updated };
+  } catch (error: any) {
+    console.error("Failed to update task:", error);
+    return { error: error.message || "Failed to update task." };
+  }
+}
+
+// -----------------------------------------------------------------------------
+// EXPENSES
+// -----------------------------------------------------------------------------
+
+export async function getExpenses() {
+  try {
+    const tenantId = await getTenantId();
+    const expenses = await prisma.expense.findMany({
+      where: { tenantId },
+      include: { category: true },
+      orderBy: { date: "desc" },
+    });
+    return { success: true, data: expenses };
+  } catch (error: any) {
+    console.error("Failed to fetch expenses:", error);
+    return { error: error.message || "Failed to fetch expenses." };
+  }
+}
+
+export async function getExpenseCategories() {
+  try {
+    const tenantId = await getTenantId();
+    const categories = await prisma.expenseCategory.findMany({
+      where: { tenantId },
+      orderBy: { name: "asc" }
+    });
+    return { success: true, data: categories };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch categories." };
+  }
+}
+
+export async function addExpenseCategory(name: string) {
+  try {
+    const tenantId = await getTenantId();
+    const category = await prisma.expenseCategory.create({
+      data: { tenantId, name }
+    });
+    revalidatePath("/expenses");
+    return { success: true, data: category };
+  } catch (error: any) {
+    return { error: error.message || "Failed to add category." };
+  }
+}
+
+export async function addExpense(data: FormData) {
+  try {
+    const tenantId = await getTenantId();
+    const categoryId = data.get("categoryId") as string;
+    const amount = parseFloat(data.get("amount") as string);
+    const description = data.get("description") as string;
+    const paymentMode = data.get("paymentMode") as any;
+
+    if (!categoryId || isNaN(amount) || !paymentMode) {
+      return { error: "Category, Amount, and Payment Mode are required." };
+    }
+
+    const expense = await prisma.expense.create({
+      data: {
+        tenantId,
+        categoryId,
+        amount,
+        description,
+        paymentMode
+      }
+    });
+
+    revalidatePath("/expenses");
+    return { success: true, data: expense };
+  } catch (error: any) {
+    console.error("Failed to add expense:", error);
+    return { error: error.message || "Failed to add expense." };
+  }
+}
+
+// -----------------------------------------------------------------------------
+// RESTAURANT POS
+// -----------------------------------------------------------------------------
+
+export async function getMenuCategories() {
+  try {
+    const tenantId = await getTenantId();
+    const categories = await prisma.menuCategory.findMany({
+      where: { tenantId },
+      include: { items: true },
+      orderBy: { name: "asc" }
+    });
+    return { success: true, data: categories };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch menu." };
+  }
+}
+
+export async function addMenuCategory(name: string) {
+  try {
+    const tenantId = await getTenantId();
+    const category = await prisma.menuCategory.create({
+      data: { tenantId, name }
+    });
+    revalidatePath("/restaurant");
+    return { success: true, data: category };
+  } catch (error: any) {
+    return { error: error.message || "Failed to add menu category." };
+  }
+}
+
+export async function addMenuItem(data: FormData) {
+  try {
+    const tenantId = await getTenantId();
+    const categoryId = data.get("categoryId") as string;
+    const name = data.get("name") as string;
+    const price = parseFloat(data.get("price") as string);
+    const isVeg = data.get("isVeg") === "true";
+
+    if (!categoryId || !name || isNaN(price)) {
+      return { error: "Category, Name, and Price are required." };
+    }
+
+    const item = await prisma.menuItem.create({
+      data: {
+        tenantId,
+        categoryId,
+        name,
+        price,
+        isVeg
+      }
+    });
+
+    revalidatePath("/restaurant");
+    return { success: true, data: item };
+  } catch (error: any) {
+    return { error: error.message || "Failed to add menu item." };
+  }
+}
+
+export async function getTables() {
+  try {
+    const tenantId = await getTenantId();
+    const tables = await prisma.diningTable.findMany({
+      where: { tenantId },
+      orderBy: { name: "asc" }
+    });
+    return { success: true, data: tables };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch tables." };
+  }
+}
+
+export async function addTable(name: string) {
+  try {
+    const tenantId = await getTenantId();
+    const table = await prisma.diningTable.create({
+      data: { tenantId, name }
+    });
+    revalidatePath("/restaurant");
+    return { success: true, data: table };
+  } catch (error: any) {
+    return { error: error.message || "Failed to add table." };
+  }
+}
+
+export async function createRestOrder(tableId: string) {
+  try {
+    const tenantId = await getTenantId();
+    
+    // Check if table is available
+    const table = await prisma.diningTable.findFirst({
+      where: { id: tableId, tenantId }
+    });
+
+    if (!table) return { error: "Table not found." };
+    if (table.status !== "AVAILABLE") return { error: "Table is not available." };
+
+    const result = await prisma.$transaction(async (tx) => {
+      const order = await tx.restOrder.create({
+        data: {
+          tenantId,
+          tableId,
+          orderType: "DINE_IN",
+          status: "KOT_PENDING"
+        }
+      });
+
+      await tx.diningTable.update({
+        where: { id: tableId },
+        data: { status: "OCCUPIED" }
+      });
+
+      return order;
+    });
+
+    revalidatePath("/restaurant");
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { error: error.message || "Failed to create order." };
+  }
+}
+
+export async function getActiveOrders() {
+  try {
+    const tenantId = await getTenantId();
+    const orders = await prisma.restOrder.findMany({
+      where: { tenantId, status: { not: "BILLED" } },
+      include: { table: true, items: { include: { menuItem: true } } },
+      orderBy: { createdAt: "desc" }
+    });
+    return { success: true, data: orders };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch active orders." };
+  }
+}
+
+export async function addItemToOrder(orderId: string, menuItemId: string, quantity: number, price: number) {
+  try {
+    const tenantId = await getTenantId();
+    
+    const result = await prisma.$transaction(async (tx) => {
+      const item = await tx.restOrderItem.create({
+        data: {
+          orderId,
+          menuItemId,
+          quantity,
+          price,
+          status: "PENDING"
+        }
+      });
+
+      // Update order total
+      const order = await tx.restOrder.findUnique({ where: { id: orderId } });
+      if (order) {
+        await tx.restOrder.update({
+          where: { id: orderId },
+          data: { totalAmount: order.totalAmount + (price * quantity) }
+        });
+      }
+      return item;
+    });
+
+    revalidatePath("/restaurant");
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { error: error.message || "Failed to add item." };
+  }
+}
+
+export async function billOrder(orderId: string) {
+  try {
+    const tenantId = await getTenantId();
+    const result = await prisma.$transaction(async (tx) => {
+      const order = await tx.restOrder.update({
+        where: { id: orderId, tenantId },
+        data: { status: "BILLED" }
+      });
+      
+      if (order.tableId) {
+        await tx.diningTable.update({
+          where: { id: order.tableId },
+          data: { status: "AVAILABLE" }
+        });
+      }
+      return order;
+    });
+
+    revalidatePath("/restaurant");
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { error: error.message || "Failed to bill order." };
+  }
+}
