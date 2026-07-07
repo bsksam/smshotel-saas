@@ -1,0 +1,513 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id                String       @id @default(cuid())
+  name              String
+  domain            String?      @unique
+  logoUrl           String?
+  primaryColor      String?      @default("#000000")
+  smsApiKey         String?
+  emailApiKey       String?
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  users             User[]
+  licenses          LicenseKey[]
+  auditLogs         AuditLog[]
+  
+  // Phase 2
+  roomTypes         RoomType[]
+  rooms             Room[]
+  guests            Guest[]
+  reservations      Reservation[]
+
+  // Phase 3
+  menuCategories    MenuCategory[]
+  menuItems         MenuItem[]
+  diningTables      DiningTable[]
+  restOrders        RestOrder[]
+  liquorBrands      LiquorBrand[]
+  barInventories    BarInventory[]
+  barOrders         BarOrder[]
+  invoices          Invoice[]
+
+  // Phase 4
+  housekeepingTasks HousekeepingTask[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          Role      @default(RECEPTION)
+  tenantId      String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+  accounts      Account[]
+  sessions      Session[]
+  auditLogs     AuditLog[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Role {
+  SUPER_ADMIN
+  HOTEL_OWNER
+  MANAGER
+  RECEPTION
+  RESTAURANT_MANAGER
+  RESTAURANT_STAFF
+  BAR_MANAGER
+  BAR_STAFF
+  HOUSEKEEPING
+  CASHIER
+  ACCOUNTANT
+}
+
+model LicenseKey {
+  id              String       @id @default(cuid())
+  key             String       @unique
+  tenantId        String
+  validity        ValidityType
+  expiresAt       DateTime
+  deviceLimit     Int          @default(1)
+  domainBinding   String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+}
+
+enum ValidityType {
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+  LIFETIME
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  userId      String?
+  action      String
+  module      String
+  ipAddress   String?
+  oldValue    String?  @db.Text
+  newValue    String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 2 Models
+// -----------------------------------------------------------------------------
+
+model RoomType {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String   // e.g., Deluxe, Suite
+  description String?
+  basePrice   Float
+  capacity    Int      @default(2)
+  amenities   String?  // JSON string or comma separated
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  rooms       Room[]
+}
+
+model Room {
+  id          String     @id @default(cuid())
+  tenantId    String
+  roomTypeId  String
+  number      String
+  floor       String?
+  status      RoomStatus @default(AVAILABLE)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  roomType      RoomType      @relation(fields: [roomTypeId], references: [id])
+  reservations  Reservation[]
+  housekeepingTasks HousekeepingTask[]
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  CLEANING
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+model Guest {
+  id             String   @id @default(cuid())
+  tenantId       String
+  firstName      String
+  lastName       String
+  mobile         String
+  email          String?
+  address        String?
+  idProofType    String?  // Aadhaar, Passport, Driving License
+  idProofNumber  String?
+  gstNumber      String?
+  companyName    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  reservations   Reservation[]
+}
+
+model Reservation {
+  id               String            @id @default(cuid())
+  tenantId         String
+  guestId          String
+  roomId           String
+  checkInDate      DateTime
+  expectedCheckOut DateTime
+  actualCheckOut   DateTime?
+  status           ReservationStatus @default(RESERVED)
+  adults           Int               @default(1)
+  children         Int               @default(0)
+  extraBed         Int               @default(0)
+  specialRequests  String?           @db.Text
+  advancePayment   Float             @default(0)
+  totalAmount      Float             @default(0)
+  bookingNotes     String?           @db.Text
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id])
+  guest            Guest             @relation(fields: [guestId], references: [id])
+  room             Room              @relation(fields: [roomId], references: [id])
+}
+
+enum ReservationStatus {
+  RESERVED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+// -----------------------------------------------------------------------------
+// Phase 3 Models
+// -----------------------------------------------------------------------------
+
+// Restaurant
+model MenuCategory {
+  id          String     @id @default(cuid())
+  tenantId    String
+  name        String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+  items       MenuItem[]
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  tenantId    String
+  categoryId  String
+  name        String
+  description String?
+  price       Float
+  isVeg       Boolean      @default(true)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  category    MenuCategory @relation(fields: [categoryId], references: [id])
+  orderItems  RestOrderItem[]
+}
+
+model DiningTable {
+  id          String      @id @default(cuid())
+  tenantId    String
+  name        String      // e.g., T1, Fam-1
+  capacity    Int         @default(4)
+  area        String?     // AC Hall, Garden
+  status      TableStatus @default(AVAILABLE)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  orders      RestOrder[]
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+model RestOrder {
+  id            String          @id @default(cuid())
+  tenantId      String
+  tableId       String?
+  roomId        String?         // For room service
+  status        OrderStatus     @default(KOT_PENDING)
+  orderType     OrderType       @default(DINE_IN)
+  totalAmount   Float           @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+  table         DiningTable?    @relation(fields: [tableId], references: [id])
+  items         RestOrderItem[]
+  invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
+  invoiceId     String?
+}
+
+model RestOrderItem {
+  id            String      @id @default(cuid())
+  orderId       String
+  menuItemId    String
+  quantity      Int
+  price         Float
+  notes         String?
+  status        KOTStatus   @default(PENDING)
+
+  order         RestOrder   @relation(fields: [orderId], references: [id])
+  menuItem      MenuItem    @relation(fields: [menuItemId], references: [id])
+}
+
+enum OrderStatus {
+  KOT_PENDING
+  PREPARING
+  SERVED
+  BILLED
+}
+
+enum OrderType {
+  DINE_IN
+  ROOM_SERVICE
+  PARCEL
+}
+
+enum KOTStatus {
+  PENDING
+  PREPARING
+  DONE
+}
+
+// Bar
+model LiquorBrand {
+  id            String         @id @default(cuid())
+  tenantId      String
+  name          String
+  type          String         // Whiskey, Vodka, etc.
+  bottleSizeMl  Int
+  pegSizeMl     Int            @default(30)
+  pegPrice      Float
+  bottlePrice   Float
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  inventories   BarInventory[]
+  orderItems    BarOrderItem[]
+}
+
+model BarInventory {
+  id            String      @id @default(cuid())
+  tenantId      String
+  brandId       String
+  bottlesStock  Int         @default(0)
+  pegsStock     Int         @default(0) // Remaining pegs in open bottle
+  updatedAt     DateTime    @updatedAt
+
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
+  brand         LiquorBrand @relation(fields: [brandId], references: [id])
+}
+
+model BarOrder {
+  id            String         @id @default(cuid())
+  tenantId      String
+  roomId        String?        // Room posting
+  customerName  String?        // Counter sales
+  totalAmount   Float          @default(0)
+  status        OrderStatus    @default(BILLED)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  items         BarOrderItem[]
+  invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
+  invoiceId     String?
+}
+
+model BarOrderItem {
+  id            String      @id @default(cuid())
+  orderId       String
+  brandId       String
+  saleType      String      // PEG or BOTTLE
+  quantity      Int
+  price         Float
+
+  order         BarOrder    @relation(fields: [orderId], references: [id])
+  brand         LiquorBrand @relation(fields: [brandId], references: [id])
+}
+
+// Billing
+model Invoice {
+  id            String        @id @default(cuid())
+  tenantId      String
+  invoiceNumber String        @unique
+  reservationId String?
+  guestName     String
+  subTotal      Float
+  gstAmount     Float
+  discount      Float         @default(0)
+  totalAmount   Float
+  paidAmount    Float         @default(0)
+  status        InvoiceStatus @default(UNPAID)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  restOrders    RestOrder[]
+  barOrders     BarOrder[]
+  payments      Payment[]
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  amount        Float
+  method        PaymentMethod
+  transactionId String?
+  createdAt     DateTime      @default(now())
+
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+  PARTIAL
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+  CREDIT
+}
+
+// -----------------------------------------------------------------------------
+// Phase 4 Models
+// -----------------------------------------------------------------------------
+
+// Housekeeping
+model HousekeepingTask {
+  id          String     @id @default(cuid())
+  tenantId    String
+  roomId      String
+  assignedTo  String?    // User ID of housekeeper
+  taskType    String     // CLEANING, MAINTENANCE, INSPECTION
+  status      TaskStatus @default(PENDING)
+  notes       String?    @db.Text
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+  room        Room       @relation(fields: [roomId], references: [id])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+// Expenses
+model ExpenseCategory {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String    // e.g., Salary, Electricity, Kitchen Purchase
+  isActive    Boolean   @default(true)
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  expenses    Expense[]
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  tenantId    String
+  categoryId  String
+  amount      Float
+  description String?
+  date        DateTime        @default(now())
+  paymentMode PaymentMethod
+  receiptUrl  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+}
