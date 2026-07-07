@@ -1,4 +1,4 @@
-import { Search, Plus, Coffee, Utensils, Printer } from "lucide-react";
+import { Search, Plus, Coffee, Utensils, Printer, Receipt } from "lucide-react";
 
 export default function RestaurantPOS() {
   const tables = [
