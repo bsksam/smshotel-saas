@@ -12,7 +12,6 @@ export async function getAvailableRooms(tenantId: string) {
       where: {
         tenantId,
         status: "AVAILABLE",
-        isClean: true,
       },
       include: {
         roomType: true,
@@ -51,16 +50,22 @@ export async function createCheckIn(data: {
       let guest = await tx.guest.findFirst({
         where: {
           tenantId: data.tenantId,
-          phone: data.guestPhone,
+          mobile: data.guestPhone,
         },
       });
 
       if (!guest) {
+        // split name by space for first/last name
+        const nameParts = data.guestName.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ') || ' ';
+
         guest = await tx.guest.create({
           data: {
             tenantId: data.tenantId,
-            fullName: data.guestName,
-            phone: data.guestPhone,
+            firstName,
+            lastName,
+            mobile: data.guestPhone,
             email: data.guestEmail,
           },
         });
