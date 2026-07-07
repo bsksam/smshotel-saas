@@ -16,10 +16,6 @@ export async function proxy(request: NextRequest) {
 
   if (session && path === "/login") {
     // Redirect authenticated users away from login page
-    // @ts-ignore
-    if (session.user?.role === "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
