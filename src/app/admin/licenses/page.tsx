@@ -1,12 +1,25 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Filter, X, Loader2 } from "lucide-react";
-import { generateLicense } from "@/actions/admin";
+import { generateLicense, getLicenses, getTenants } from "@/actions/admin";
 
 export default function LicensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [licenses, setLicenses] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const [licRes, tenRes] = await Promise.all([getLicenses(), getTenants()]);
+      if (licRes.success) setLicenses(licRes.data);
+      if (tenRes.success) setTenants(tenRes.data);
+      setIsFetching(false);
+    }
+    loadData();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,7 +33,8 @@ export default function LicensesPage() {
       setError(result.error);
     } else {
       setIsModalOpen(false);
-      window.location.reload(); 
+      const updated = await getLicenses();
+      if (updated.success) setLicenses(updated.data);
     }
     setIsLoading(false);
   }
@@ -57,36 +71,54 @@ export default function LicensesPage() {
           </button>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-zinc-600">
-            <thead className="bg-zinc-50/50 text-zinc-500 font-semibold border-b border-zinc-100 text-[11px] uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Hotel Name</th>
-                <th className="px-6 py-4">License Key</th>
-                <th className="px-6 py-4">Validity</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Expires At</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              <tr className="hover:bg-zinc-50/50 transition-colors">
-                <td className="px-6 py-4 font-semibold text-zinc-900">Royal Palace Hotel</td>
-                <td className="px-6 py-4 font-mono text-xs text-zinc-500 bg-zinc-50/50 rounded inline-block mt-2">A1B2-C3D4-E5F6-G7H8</td>
-                <td className="px-6 py-4 font-medium">YEARLY</td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    Active
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-zinc-500">Dec 31, 2026</td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-zinc-600 hover:text-zinc-900 font-medium transition-colors">Manage</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {isFetching ? (
+          <div className="p-16 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+          </div>
+        ) : licenses.length === 0 ? (
+          <div className="p-16 text-center">
+            <p className="text-zinc-400 text-sm">No licenses generated yet. Click "Generate License" to get started.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-zinc-600">
+              <thead className="bg-zinc-50/50 text-zinc-500 font-semibold border-b border-zinc-100 text-[11px] uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4">Hotel Name</th>
+                  <th className="px-6 py-4">License Key</th>
+                  <th className="px-6 py-4">Validity</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Expires At</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {licenses.map((license) => (
+                  <tr key={license.id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-zinc-900">{license.tenant?.name || "Unknown"}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-zinc-500 bg-zinc-50/50 rounded inline-block mt-2">{license.key}</td>
+                    <td className="px-6 py-4 font-medium">{license.validity.replace('_', ' ')}</td>
+                    <td className="px-6 py-4">
+                      {license.isActive && new Date(license.expiresAt) > new Date() ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">
+                          Expired
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-zinc-500">{new Date(license.expiresAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-zinc-600 hover:text-zinc-900 font-medium transition-colors">Manage</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
@@ -105,8 +137,13 @@ export default function LicensesPage() {
                 </div>
               )}
               <div>
-                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Tenant ID</label>
-                <input required name="tenantId" type="text" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="Paste Tenant ID here" />
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Tenant</label>
+                <select required name="tenantId" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                  <option value="">Select a Hotel...</option>
+                  {tenants.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Validity Period</label>

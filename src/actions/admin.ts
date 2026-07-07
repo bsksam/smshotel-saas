@@ -131,3 +131,41 @@ export async function createUser(data: FormData) {
     return { error: error.message || "Failed to create user." };
   }
 }
+
+export async function getTenants() {
+  try {
+    const tenants = await prisma.tenant.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: tenants };
+  } catch (error: any) {
+    console.error("Failed to fetch tenants:", error);
+    return { error: "Failed to fetch tenants." };
+  }
+}
+
+export async function getLicenses() {
+  try {
+    const licenses = await prisma.licenseKey.findMany({
+      include: { tenant: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: licenses };
+  } catch (error: any) {
+    console.error("Failed to fetch licenses:", error);
+    return { error: "Failed to fetch licenses." };
+  }
+}
+
+export async function getUsers() {
+  try {
+    const users = await prisma.user.findMany({
+      include: { tenant: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: users };
+  } catch (error: any) {
+    console.error("Failed to fetch users:", error);
+    return { error: "Failed to fetch users." };
+  }
+}

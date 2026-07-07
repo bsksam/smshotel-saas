@@ -1,16 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Search, Filter, Plus, X, Loader2 } from "lucide-react";
-import { createTenant } from "@/actions/admin";
+import { createTenant, getTenants } from "@/actions/admin";
 
 export default function HotelsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hotels, setHotels] = useState<any[]>([]);
   const [error, setError] = useState("");
+  const [isFetching, setIsFetching] = useState(true);
 
-  // In a real app we'd fetch these server-side or via SWR/React Query. 
-  // We'll leave it as a placeholder for now since we're building out the actions.
+  useEffect(() => {
+    async function loadHotels() {
+      const result = await getTenants();
+      if (result.success) {
+        setHotels(result.data);
+      }
+      setIsFetching(false);
+    }
+    loadHotels();
+  }, []);
   
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,8 +33,8 @@ export default function HotelsPage() {
       setError(result.error);
     } else {
       setIsModalOpen(false);
-      // reload page to see new data if we were fetching server side
-      window.location.reload(); 
+      const updated = await getTenants();
+      if (updated.success) setHotels(updated.data);
     }
     setIsLoading(false);
   }
@@ -62,9 +71,48 @@ export default function HotelsPage() {
           </button>
         </div>
         
-        <div className="p-16 text-center">
-          <p className="text-zinc-400 text-sm">Hotels data table will be populated from the database here.</p>
-        </div>
+        {isFetching ? (
+          <div className="p-16 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+          </div>
+        ) : hotels.length === 0 ? (
+          <div className="p-16 text-center">
+            <p className="text-zinc-400 text-sm">No hotels found. Click "Add New Hotel" to get started.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-zinc-600">
+              <thead className="bg-zinc-50/50 text-zinc-500 font-semibold border-b border-zinc-100 text-[11px] uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4">Hotel Name</th>
+                  <th className="px-6 py-4">Domain</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Created</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {hotels.map((hotel) => (
+                  <tr key={hotel.id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-zinc-900">{hotel.name}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-zinc-500">{hotel.domain || "N/A"}</td>
+                    <td className="px-6 py-4">
+                      {hotel.isActive ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">Active</span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">Inactive</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-zinc-500">{new Date(hotel.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-zinc-600 hover:text-zinc-900 font-medium transition-colors">Manage</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

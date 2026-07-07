@@ -1,13 +1,26 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, Plus, X, Loader2 } from "lucide-react";
-import { createUser } from "@/actions/admin";
+import { createUser, getUsers, getTenants } from "@/actions/admin";
 import { Role } from "@prisma/client";
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [users, setUsers] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const [usersRes, tenRes] = await Promise.all([getUsers(), getTenants()]);
+      if (usersRes.success) setUsers(usersRes.data);
+      if (tenRes.success) setTenants(tenRes.data);
+      setIsFetching(false);
+    }
+    loadData();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,7 +34,8 @@ export default function UsersPage() {
       setError(result.error);
     } else {
       setIsModalOpen(false);
-      window.location.reload(); 
+      const updated = await getUsers();
+      if (updated.success) setUsers(updated.data);
     }
     setIsLoading(false);
   }
@@ -58,9 +72,58 @@ export default function UsersPage() {
           </button>
         </div>
         
-        <div className="p-16 text-center">
-          <p className="text-zinc-400 text-sm">Global users datagrid will be rendered here.</p>
-        </div>
+        {isFetching ? (
+          <div className="p-16 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="p-16 text-center">
+            <p className="text-zinc-400 text-sm">No users found in the system.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-zinc-600">
+              <thead className="bg-zinc-50/50 text-zinc-500 font-semibold border-b border-zinc-100 text-[11px] uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Tenant</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-zinc-900">{user.name}</td>
+                    <td className="px-6 py-4 text-zinc-500">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200">
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-zinc-500">{user.tenant?.name || "System"}</td>
+                    <td className="px-6 py-4">
+                      {user.isActive ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-zinc-600 hover:text-zinc-900 font-medium transition-colors">Manage</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
@@ -93,13 +156,25 @@ export default function UsersPage() {
                 <input required name="email" type="email" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm" placeholder="john@smshotel.com" />
                 <p className="text-[10px] text-zinc-400 mt-1">Default password will be 'password123'.</p>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">System Role</label>
-                <select required name="role" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
-                  <option value={Role.SUPER_ADMIN}>SUPER_ADMIN</option>
-                  <option value={Role.SUPPORT_STAFF}>SUPPORT_STAFF</option>
-                  <option value={Role.BILLING_ADMIN}>BILLING_ADMIN</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">System Role</label>
+                  <select required name="role" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                    <option value={Role.SUPER_ADMIN}>SUPER_ADMIN</option>
+                    <option value={Role.HOTEL_OWNER}>HOTEL_OWNER</option>
+                    <option value={Role.SUPPORT_STAFF}>SUPPORT_STAFF</option>
+                    <option value={Role.BILLING_ADMIN}>BILLING_ADMIN</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Tenant (Optional)</label>
+                  <select name="tenantId" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                    <option value="">System Wide (No Tenant)</option>
+                    {tenants.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3 bg-zinc-50/50">
