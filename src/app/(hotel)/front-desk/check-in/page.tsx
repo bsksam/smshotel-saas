@@ -1,148 +1,160 @@
 "use client";
 
-import { CheckCircle, UploadCloud } from "lucide-react";
-import { useState } from "react";
-import { createCheckIn } from "@/actions/hotel";
+import { useEffect, useState } from "react";
+import { Search, MapPin, Users, CreditCard, ChevronRight, CheckCircle, Loader2 } from "lucide-react";
+import { getReservations, checkInGuest } from "@/actions/hotel";
 
 export default function CheckInPage() {
-  const [formData, setFormData] = useState({
-    guestName: "",
-    guestPhone: "",
-    guestEmail: "",
-    roomId: "cm123", // Dummy default room ID
-    checkInDate: new Date().toISOString().split('T')[0],
-    expectedCheckOut: "",
-    adults: 2,
-    children: 0,
-    advancePayment: 0,
-  });
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    // Use a hardcoded tenant ID for demo purposes
-    // In production, this would come from the user's session
-    const tenantId = "dummy-tenant-id"; 
-
-    const res = await createCheckIn({
-      ...formData,
-      tenantId,
-      adults: Number(formData.adults),
-      children: Number(formData.children),
-      advancePayment: Number(formData.advancePayment),
-    });
-
-    if (res.success) {
-      setMessage("Guest checked in successfully!");
-      // Reset form or redirect
-    } else {
-      setMessage("Error: " + res.error);
+  async function loadData() {
+    setIsLoading(true);
+    try {
+      const resRes = await getReservations();
+      if (resRes.success) {
+        // Only show reservations that are in RESERVED status (pending check-in)
+        const pending = resRes.data.filter((r: any) => r.status === "RESERVED");
+        setReservations(pending);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-    setLoading(false);
-  };
+  }
+
+  async function handleCheckIn(id: string) {
+    if (!confirm("Are you sure you want to check in this guest?")) return;
+    setProcessingId(id);
+    const res = await checkInGuest(id);
+    if (!res.error) {
+      loadData();
+    } else {
+      alert(res.error);
+    }
+    setProcessingId(null);
+  }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Guest Check-in</h2>
-          <p className="text-gray-500 mt-1">Register new walk-in guest or process a reservation.</p>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Today's Check-ins</h2>
+          <p className="text-zinc-500 mt-1 text-sm">Process arriving guests and assign rooms.</p>
+        </div>
+        <div className="flex gap-4">
+          <div className="bg-white px-4 py-2 rounded-lg border border-zinc-200 shadow-sm flex flex-col items-center justify-center">
+            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Expected</span>
+            <span className="text-lg font-bold text-zinc-900">{reservations.length}</span>
+          </div>
         </div>
       </div>
 
-      {message && (
-        <div className={`p-4 rounded-lg font-bold ${message.startsWith("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-          {message}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Guest Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                <input required type="text" name="guestName" value={formData.guestName} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
-                <input required type="tel" name="guestPhone" value={formData.guestPhone} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input type="email" name="guestEmail" value={formData.guestEmail} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-              </div>
-            </div>
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-zinc-200/60 flex justify-between items-center bg-zinc-50/50">
+          <div className="relative w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input 
+              type="text" 
+              placeholder="Search by guest name or booking ID..." 
+              className="w-full pl-10 pr-4 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white"
+            />
           </div>
-
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">ID Proof & Documents</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50">
-              <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
-              <p className="text-sm font-medium text-gray-700">Click or drag document images to upload</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Room & Stay Details</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Room *</label>
-                <select name="roomId" value={formData.roomId} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-                  <option value="cm123">101 - Deluxe (Available)</option>
-                  <option value="cm124">105 - Deluxe (Available)</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
-                  <input type="date" name="checkInDate" value={formData.checkInDate} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50" readOnly />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Check-out *</label>
-                  <input required type="date" name="expectedCheckOut" value={formData.expectedCheckOut} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Adults</label>
-                  <input type="number" name="adults" value={formData.adults} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Children</label>
-                  <input type="number" name="children" value={formData.children} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Payment Collection</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Advance Amount</label>
-                <input type="number" name="advancePayment" value={formData.advancePayment} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-              </div>
-            </div>
-            <button disabled={loading} type="submit" className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-bold text-lg shadow-sm">
-              <CheckCircle className="w-5 h-5" />
-              {loading ? "Processing..." : "Complete Check-in"}
+          <div className="flex gap-2">
+            <button className="px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
+              Filter By Room Type
             </button>
           </div>
         </div>
-      </form>
+
+        <div className="p-4 min-h-[400px]">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-64 text-zinc-400 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+              <p className="text-sm font-medium">Loading expected arrivals...</p>
+            </div>
+          ) : reservations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-zinc-500 gap-3">
+              <div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mb-2">
+                <CheckCircle className="w-5 h-5 text-zinc-400" />
+              </div>
+              <p className="text-sm font-medium">No pending check-ins</p>
+              <p className="text-xs text-zinc-400">All guests have been checked in successfully.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reservations.map((res) => (
+                <div key={res.id} className="border border-zinc-200 rounded-xl p-5 hover:border-zinc-300 transition-colors shadow-sm bg-white group">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-900 font-bold">
+                        {res.guest?.firstName?.charAt(0)}{res.guest?.lastName?.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-zinc-900">{res.guest?.firstName} {res.guest?.lastName}</h3>
+                        <p className="text-xs font-mono text-zinc-500 font-medium">ID: {res.id.substring(res.id.length - 8).toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-zinc-100 text-zinc-700 rounded-lg text-xs font-bold tracking-wider">
+                      EXPECTED
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 mb-5 p-4 bg-zinc-50/50 rounded-lg border border-zinc-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-zinc-400" />
+                      <div>
+                        <p className="text-xs text-zinc-500 font-medium">Room</p>
+                        <p className="font-semibold text-zinc-900">{res.room?.number} <span className="text-zinc-500 font-normal">({res.room?.roomType?.name})</span></p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="w-4 h-4 text-zinc-400" />
+                      <div>
+                        <p className="text-xs text-zinc-500 font-medium">Guests</p>
+                        <p className="font-semibold text-zinc-900">{res.adults} Adults</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <CreditCard className="w-4 h-4 text-zinc-400" />
+                      <div>
+                        <p className="text-xs text-zinc-500 font-medium">Advance Paid</p>
+                        <p className="font-semibold text-green-600">${res.advancePayment}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2 border-t border-zinc-100 mt-2">
+                    <button 
+                      onClick={() => handleCheckIn(res.id)}
+                      disabled={processingId === res.id}
+                      className="flex items-center gap-2 bg-zinc-900 text-white px-5 py-2 rounded-lg hover:bg-zinc-800 transition-colors font-medium text-sm shadow-sm disabled:opacity-50"
+                    >
+                      {processingId === res.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing
+                        </>
+                      ) : (
+                        <>
+                          Complete Check-in
+                          <ChevronRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
