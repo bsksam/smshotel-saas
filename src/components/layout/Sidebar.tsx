@@ -3,11 +3,11 @@ import { Building2, LayoutDashboard, Key, Users, Settings, LogOut } from "lucide
 
 export function Sidebar() {
   const navItems = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Hotels", href: "/hotels", icon: Building2 },
-    { name: "Licenses", href: "/licenses", icon: Key },
-    { name: "Users", href: "/users", icon: Users },
-    { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { name: "Hotels", href: "/admin/hotels", icon: Building2 },
+    { name: "Licenses", href: "/admin/licenses", icon: Key },
+    { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
   return (
