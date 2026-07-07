@@ -41,8 +41,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <Image src="/logo.svg" alt="SMSHOTEL Logo" width={80} height={80} className="rounded-2xl shadow-sm" />
+        <div className="flex justify-center mb-8">
+          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mb-4">
+            <img src="/logo.svg" alt="SMSHOTEL Logo" className="w-12 h-12" />
+          </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Sign in to your account
