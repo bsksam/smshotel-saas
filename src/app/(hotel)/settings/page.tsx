@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Upload, Palette, Loader2 } from "lucide-react";
+import { Save, Palette, Loader2 } from "lucide-react";
 import { getTenantSettings, updateTenantSettings } from "@/actions/hotel";
 
 export default function HotelSettingsPage() {
@@ -38,7 +38,6 @@ export default function HotelSettingsPage() {
     if (res.success) {
       setSuccessMsg("Settings updated successfully!");
       setSettings(res.data);
-      // Reload page to update sidebar/branding names
       window.location.reload();
     } else {
       setError(res.error || "Failed to update settings");
@@ -61,22 +60,24 @@ export default function HotelSettingsPage() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+        <div className="p-3 bg-red-50 text-red-650 text-xs font-semibold rounded-xl border border-red-150">
           {error}
         </div>
       )}
 
       {successMsg && (
-        <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-100">
+        <div className="p-3 bg-green-50 text-green-700 text-xs font-semibold rounded-xl border border-green-150">
           {successMsg}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+          
           <div className="p-6 border-b border-zinc-100 bg-zinc-50/30">
             <h3 className="text-lg font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-              <Palette className="w-5 h-5 text-zinc-500" />
+              <Palette className="w-5 h-5 text-indigo-600 animate-pulse" />
               White Label & Branding
             </h3>
             <p className="text-xs text-zinc-500 mt-1">Configure name and color used in your dashboard and invoices.</p>
@@ -91,23 +92,23 @@ export default function HotelSettingsPage() {
                   name="name"
                   type="text" 
                   defaultValue={settings?.name}
-                  className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white"
+                  className="w-full px-3 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Primary Brand Color</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <input 
                     name="primaryColor"
                     type="color" 
                     defaultValue={settings?.primaryColor || "#000000"}
-                    className="h-10 w-14 rounded border border-zinc-200 cursor-pointer bg-white"
+                    className="h-10 w-14 rounded-xl border border-zinc-200 cursor-pointer bg-white"
                   />
                   <input 
                     type="text" 
                     disabled
                     value={settings?.primaryColor || "#000000"}
-                    className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm bg-zinc-50 font-mono text-zinc-500"
+                    className="w-full px-3 py-2 border border-zinc-200 rounded-xl text-sm bg-zinc-50 font-mono text-zinc-400 font-bold"
                   />
                 </div>
               </div>
@@ -118,7 +119,7 @@ export default function HotelSettingsPage() {
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-lg hover:bg-zinc-800 transition-colors font-semibold text-xs shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl transition-all font-bold text-xs shadow-md shadow-indigo-100 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
               Save Changes
