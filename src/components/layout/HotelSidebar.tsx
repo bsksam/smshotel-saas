@@ -13,8 +13,26 @@ import {
   Brush,
   Calculator
 } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-export function HotelSidebar() {
+export async function HotelSidebar() {
+  const session = await auth();
+  // @ts-ignore
+  const tenantId = session?.user?.tenantId;
+  let tenantName = "Grand Taj";
+  let tenantInitials = "GT";
+
+  if (tenantId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId }
+    });
+    if (tenant) {
+      tenantName = tenant.name;
+      tenantInitials = tenant.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+    }
+  }
+
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Front Desk", href: "/front-desk/check-in", icon: ClipboardList },
@@ -33,9 +51,9 @@ export function HotelSidebar() {
     <aside className="w-64 bg-white/50 backdrop-blur-xl border-r border-zinc-200 h-screen flex flex-col fixed top-0 left-0">
       <div className="h-16 flex items-center px-6 border-b border-zinc-200/60">
         <div className="w-8 h-8 bg-zinc-950 rounded-lg flex items-center justify-center mr-3">
-          <span className="text-white font-bold text-sm tracking-tighter">GT</span>
+          <span className="text-white font-bold text-sm tracking-tighter">{tenantInitials}</span>
         </div>
-        <h1 className="text-lg font-bold text-zinc-900 tracking-tight">Grand Taj</h1>
+        <h1 className="text-lg font-bold text-zinc-900 tracking-tight">{tenantName}</h1>
       </div>
       
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">

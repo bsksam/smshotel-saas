@@ -1045,3 +1045,44 @@ export async function createBarOrder(data: any) {
     return { error: error.message || "Failed to place bar order." };
   }
 }
+
+// -----------------------------------------------------------------------------
+// TENANT SETTINGS & BRANDING
+// -----------------------------------------------------------------------------
+
+export async function getTenantSettings() {
+  try {
+    const tenantId = await getTenantId();
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId }
+    });
+    if (!tenant) return { error: "Tenant not found." };
+    return { success: true, data: tenant };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch settings." };
+  }
+}
+
+export async function updateTenantSettings(data: FormData) {
+  try {
+    const tenantId = await getTenantId();
+    const name = data.get("name") as string;
+    const primaryColor = data.get("primaryColor") as string;
+
+    if (!name) return { error: "Hotel Name is required." };
+
+    const updated = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        name,
+        primaryColor: primaryColor || "#000000"
+      }
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/dashboard");
+    return { success: true, data: updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update settings." };
+  }
+}
