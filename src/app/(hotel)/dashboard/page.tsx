@@ -23,14 +23,14 @@ export default async function HotelDashboard() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-950 p-8 md:p-10 shadow-lg text-white border border-zinc-800">
-        <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute left-1/3 bottom-0 -mb-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-indigo-650 to-blue-500 p-8 md:p-10 shadow-lg text-white border border-indigo-500/20">
+        <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute left-1/3 bottom-0 -mb-20 w-60 h-60 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
         
         <div className="relative z-10 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Live Status Board</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-100 bg-white/15 px-2.5 py-1 rounded-md border border-white/10">Live Status Board</span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Today's Overview</h2>
-          <p className="text-zinc-400 text-sm md:text-base max-w-xl">
+          <p className="text-indigo-50/90 text-sm md:text-base max-w-xl">
             Real-time analytics and room metrics for your property. Keep track of reservations, guests, and operational statuses.
           </p>
         </div>

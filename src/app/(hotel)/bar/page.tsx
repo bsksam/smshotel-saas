@@ -191,20 +191,20 @@ export default function BarPOS() {
       {/* Left Panel: Inventory & Menu */}
       <div className="flex-1 bg-white rounded-2xl border border-zinc-200/60 shadow-sm flex flex-col overflow-hidden">
         <div className="p-4 border-b border-zinc-200/60 flex justify-between items-center bg-zinc-50/50">
-          <h3 className="font-bold text-zinc-900 flex items-center gap-2">
-            <Wine className="w-5 h-5 text-red-600 animate-pulse" />
+          <h3 className="font-bold text-zinc-800 flex items-center gap-2">
+            <Wine className="w-5 h-5 text-indigo-600 animate-pulse" />
             Bar POS & Inventory
           </h3>
           <div className="flex gap-2">
             <button 
               onClick={() => setIsBrandModalOpen(true)}
-              className="px-3 py-1.5 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-lg transition-colors shadow-sm"
+              className="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors shadow-sm"
             >
               Add New Brand
             </button>
             <button 
               onClick={() => setIsStockModalOpen(true)}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors shadow-sm"
+              className="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-colors shadow-md shadow-indigo-100"
             >
               Add Stock
             </button>
@@ -219,7 +219,7 @@ export default function BarPOS() {
               placeholder="Search liquor brands..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white"
+              className="w-full pl-10 pr-4 py-2 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
             />
           </div>
         </div>
@@ -231,8 +231,8 @@ export default function BarPOS() {
               onClick={() => setSelectedCategory(cat)}
               className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                 selectedCategory === cat 
-                  ? "bg-zinc-900 text-white shadow-sm" 
-                  : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm" 
+                  : "bg-white border border-zinc-200 text-zinc-650 hover:bg-zinc-50"
               }`}
             >
               {cat}
@@ -260,7 +260,7 @@ export default function BarPOS() {
               const hasPegOption = brand.pegPrice > 0;
 
               return (
-                <div key={brand.id} className="flex flex-col p-4 border border-zinc-200 rounded-xl hover:border-zinc-400 hover:shadow-sm bg-white transition-all">
+                <div key={brand.id} className="flex flex-col p-4 border border-zinc-200 rounded-2xl hover:border-indigo-400 hover:shadow-md bg-white transition-all">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h4 className="font-bold text-zinc-900 text-sm tracking-tight">{brand.name}</h4>
@@ -268,8 +268,8 @@ export default function BarPOS() {
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                       totalPegs > 15 
-                        ? 'bg-green-50 text-green-700 border-green-200' 
-                        : 'bg-red-50 text-red-700 border-red-200'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-250' 
+                        : 'bg-rose-50 text-rose-700 border-rose-250'
                     }`}>
                       In Stock: {inventory.bottlesStock}B, {inventory.pegsStock}P ({totalPegs} Pegs)
                     </span>
@@ -279,18 +279,18 @@ export default function BarPOS() {
                     {hasPegOption && (
                       <button 
                         onClick={() => addToCart(brand, "PEG")}
-                        className="flex flex-col items-center justify-center p-2 rounded-lg bg-zinc-50 border border-zinc-200 hover:bg-zinc-900 hover:border-zinc-900 hover:text-white transition-all group"
+                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-indigo-50/20 border border-indigo-150 text-indigo-700 hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 hover:text-white transition-all group"
                       >
-                        <span className="text-[10px] text-zinc-500 font-medium group-hover:text-zinc-300">Peg ({brand.pegSizeMl}ml)</span>
-                        <span className="text-sm font-bold text-zinc-900 group-hover:text-white">${brand.pegPrice.toFixed(2)}</span>
+                        <span className="text-[10px] text-indigo-500 font-semibold group-hover:text-indigo-100">Peg ({brand.pegSizeMl}ml)</span>
+                        <span className="text-sm font-bold text-indigo-700 group-hover:text-white">${brand.pegPrice.toFixed(2)}</span>
                       </button>
                     )}
                     <button 
                       onClick={() => addToCart(brand, "BOTTLE")}
-                      className={`${!hasPegOption ? 'col-span-2' : ''} flex flex-col items-center justify-center p-2 rounded-lg bg-zinc-50 border border-zinc-200 hover:bg-zinc-900 hover:border-zinc-900 hover:text-white transition-all group`}
+                      className={`${!hasPegOption ? 'col-span-2' : ''} flex flex-col items-center justify-center p-2 rounded-xl bg-indigo-50/20 border border-indigo-150 text-indigo-700 hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 hover:text-white transition-all group`}
                     >
-                      <span className="text-[10px] text-zinc-500 font-medium group-hover:text-zinc-300">Full Bottle</span>
-                      <span className="text-sm font-bold text-zinc-900 group-hover:text-white">${brand.bottlePrice.toFixed(2)}</span>
+                      <span className="text-[10px] text-indigo-500 font-semibold group-hover:text-indigo-100">Full Bottle</span>
+                      <span className="text-sm font-bold text-indigo-700 group-hover:text-white">${brand.bottlePrice.toFixed(2)}</span>
                     </button>
                   </div>
                 </div>
@@ -305,12 +305,14 @@ export default function BarPOS() {
         <div className="p-4 border-b border-zinc-200/60 bg-zinc-50/50">
           <h3 className="font-bold text-zinc-900 text-sm">Current Tab</h3>
           <div className="mt-3 space-y-3">
-            <div className="flex gap-2 bg-white p-1 rounded-lg border border-zinc-200">
+            <div className="flex gap-2 bg-white p-1 rounded-xl border border-zinc-200">
               <button 
                 type="button"
                 onClick={() => setPostingType("WALK_IN")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                  postingType === "WALK_IN" ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-50"
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  postingType === "WALK_IN" 
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm" 
+                    : "text-zinc-650 hover:bg-zinc-50"
                 }`}
               >
                 Walk-In
@@ -318,8 +320,10 @@ export default function BarPOS() {
               <button 
                 type="button"
                 onClick={() => setPostingType("ROOM")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                  postingType === "ROOM" ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-50"
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  postingType === "ROOM" 
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm" 
+                    : "text-zinc-650 hover:bg-zinc-50"
                 }`}
               >
                 Room Post
@@ -332,13 +336,13 @@ export default function BarPOS() {
                 placeholder="Guest Name (Optional)" 
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-1.5 border border-zinc-200 rounded-lg text-xs focus:ring-2 focus:ring-zinc-900 focus:outline-none bg-white text-zinc-800"
+                className="w-full px-3 py-1.5 border border-zinc-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-zinc-800 font-medium"
               />
             ) : (
               <select 
                 value={selectedReservationId}
                 onChange={(e) => setSelectedReservationId(e.target.value)}
-                className="w-full px-3 py-1.5 border border-zinc-200 rounded-lg text-xs focus:ring-2 focus:ring-zinc-900 focus:outline-none bg-white text-zinc-800"
+                className="w-full px-3 py-1.5 border border-zinc-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-zinc-850 font-medium"
               >
                 <option value="">Select Room / Guest</option>
                 {checkedInGuests.map(g => (
@@ -359,29 +363,29 @@ export default function BarPOS() {
             cart.map(item => (
               <div key={item.key} className="flex justify-between items-center border-b border-zinc-100 pb-3">
                 <div className="max-w-[140px]">
-                  <p className="font-semibold text-zinc-900 text-xs truncate">{item.name}</p>
-                  <p className="text-[10px] text-zinc-500 font-medium">{item.saleType} @ ${item.price.toFixed(2)}</p>
+                  <p className="font-bold text-zinc-900 text-xs truncate">{item.name}</p>
+                  <p className="text-[10px] text-zinc-500 font-semibold">{item.saleType} @ ${item.price.toFixed(2)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
                     <button 
                       onClick={() => updateCartQty(item.key, -1)}
-                      className="text-zinc-500 hover:text-zinc-900 p-0.5 rounded"
+                      className="text-zinc-500 hover:text-indigo-650 p-0.5 rounded"
                     >
                       <MinusCircle className="w-4 h-4" />
                     </button>
                     <span className="w-5 text-center text-xs font-bold text-zinc-900">{item.quantity}</span>
                     <button 
                       onClick={() => updateCartQty(item.key, 1)}
-                      className="text-zinc-500 hover:text-zinc-900 p-0.5 rounded"
+                      className="text-zinc-500 hover:text-indigo-650 p-0.5 rounded"
                     >
                       <PlusCircle className="w-4 h-4" />
                     </button>
                   </div>
-                  <p className="font-bold text-zinc-900 text-xs w-14 text-right">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-mono font-bold text-zinc-900 text-xs w-14 text-right">${(item.price * item.quantity).toFixed(2)}</p>
                   <button 
                     onClick={() => removeFromCart(item.key)}
-                    className="text-zinc-400 hover:text-red-600 transition-colors"
+                    className="text-zinc-400 hover:text-rose-650 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -392,28 +396,28 @@ export default function BarPOS() {
         </div>
 
         <div className="p-4 bg-zinc-50/50 border-t border-zinc-200/60 space-y-3">
-          <div className="flex justify-between text-xs text-zinc-500 font-medium">
+          <div className="flex justify-between text-xs text-zinc-500 font-semibold">
             <span>Subtotal</span>
-            <span className="font-mono text-zinc-700">${getSubtotal().toFixed(2)}</span>
+            <span className="font-mono text-zinc-700 font-bold">${getSubtotal().toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-xs text-zinc-500 font-medium">
+          <div className="flex justify-between text-xs text-zinc-500 font-semibold">
             <span>VAT (20%)</span>
-            <span className="font-mono text-zinc-700">${getTax().toFixed(2)}</span>
+            <span className="font-mono text-zinc-700 font-bold">${getTax().toFixed(2)}</span>
           </div>
           <div className="pt-3 border-t border-zinc-200 flex justify-between items-center">
             <span className="font-bold text-zinc-900 text-sm">Total</span>
-            <span className="font-mono font-bold text-xl text-zinc-900">${getTotal().toFixed(2)}</span>
+            <span className="font-mono font-extrabold text-xl text-zinc-900">${getTotal().toFixed(2)}</span>
           </div>
           
           <button 
             onClick={handleCheckout}
             disabled={cart.length === 0 || isSubmitting}
-            className="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white py-2.5 rounded-lg hover:bg-zinc-800 font-bold text-xs transition-colors shadow-sm disabled:opacity-50 mt-4"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-xs transition-colors shadow-md disabled:opacity-50 mt-4"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin text-white" />
             ) : (
-              <Wine className="w-4 h-4" />
+              <Wine className="w-4 h-4 text-white" />
             )}
             {postingType === "ROOM" ? "Post to Room Bill" : "Generate Bar Bill"}
           </button>
@@ -424,19 +428,19 @@ export default function BarPOS() {
       {isBrandModalOpen && (
         <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-zinc-100">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-100 bg-zinc-50/30">
               <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Add New Liquor Brand</h3>
               <button onClick={() => setIsBrandModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleAddBrand} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Brand Name</label>
-                <input required name="name" type="text" placeholder="E.g. Jack Daniel's" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                <input required name="name" type="text" placeholder="E.g. Jack Daniel's" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Liquor Type</label>
-                  <select required name="type" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white">
+                  <select required name="type" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white text-zinc-800">
                     <option value="Whiskey">Whiskey</option>
                     <option value="Vodka">Vodka</option>
                     <option value="Rum">Rum</option>
@@ -448,21 +452,21 @@ export default function BarPOS() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Bottle Size (ml)</label>
-                  <input required name="bottleSizeMl" type="number" defaultValue="750" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                  <input required name="bottleSizeMl" type="number" defaultValue="750" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Peg Size (ml)</label>
-                  <input required name="pegSizeMl" type="number" defaultValue="30" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                  <input required name="pegSizeMl" type="number" defaultValue="30" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Peg Price ($)</label>
-                  <input name="pegPrice" type="number" step="0.01" defaultValue="8" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                  <input name="pegPrice" type="number" step="0.01" defaultValue="8" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-mono" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Bottle Price ($)</label>
-                  <input required name="bottlePrice" type="number" step="0.01" placeholder="120" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                  <input required name="bottlePrice" type="number" step="0.01" placeholder="120" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-mono" />
                 </div>
               </div>
               <div className="mt-8 flex gap-3 pt-4 border-t border-zinc-100">
@@ -480,7 +484,7 @@ export default function BarPOS() {
       {isStockModalOpen && (
         <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-zinc-100">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-100 bg-zinc-50/30">
               <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Add Bar Stock</h3>
               <button onClick={() => setIsStockModalOpen(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors"><X className="w-5 h-5" /></button>
             </div>
@@ -492,7 +496,7 @@ export default function BarPOS() {
                   name="brandId" 
                   value={selectedBrandForStock} 
                   onChange={(e) => setSelectedBrandForStock(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white text-zinc-800"
+                  className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white text-zinc-800"
                 >
                   <option value="">Choose a brand</option>
                   {brands.map(b => (
@@ -503,11 +507,11 @@ export default function BarPOS() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Bottles Count</label>
-                  <input name="bottles" type="number" defaultValue="0" min="0" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                  <input name="bottles" type="number" defaultValue="0" min="0" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Pegs Count (Loose)</label>
-                  <input name="pegs" type="number" defaultValue="0" min="0" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
+                  <input name="pegs" type="number" defaultValue="0" min="0" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
               </div>
               <div className="mt-8 flex gap-3 pt-4 border-t border-zinc-100">
