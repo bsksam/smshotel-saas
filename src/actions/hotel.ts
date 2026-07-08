@@ -1086,3 +1086,47 @@ export async function updateTenantSettings(data: FormData) {
     return { error: error.message || "Failed to update settings." };
   }
 }
+
+// -----------------------------------------------------------------------------
+// KITCHEN DISPLAY SYSTEM (KDS)
+// -----------------------------------------------------------------------------
+
+export async function getKdsOrders() {
+  try {
+    const tenantId = await getTenantId();
+    const orders = await prisma.restOrder.findMany({
+      where: { 
+        tenantId,
+        status: { in: ["KOT_PENDING", "PREPARING", "SERVED"] }
+      },
+      include: { 
+        table: true, 
+        items: { 
+          include: { 
+            menuItem: true 
+          } 
+        } 
+      },
+      orderBy: { createdAt: "asc" }
+    });
+    return { success: true, data: orders };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch kitchen orders." };
+  }
+}
+
+export async function updateRestOrderStatus(orderId: string, status: "KOT_PENDING" | "PREPARING" | "SERVED" | "BILLED") {
+  try {
+    const tenantId = await getTenantId();
+    const order = await prisma.restOrder.update({
+      where: { id: orderId, tenantId },
+      data: { status }
+    });
+    revalidatePath("/kitchen");
+    revalidatePath("/restaurant");
+    return { success: true, data: order };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update order status." };
+  }
+}
+

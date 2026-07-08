@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   Brush,
-  Calculator
+  Calculator,
+  ChefHat
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -41,6 +42,7 @@ export async function HotelSidebar() {
     { name: "Guests", href: "/guests", icon: Users, color: "text-amber-500", hoverBg: "hover:bg-amber-50 hover:text-amber-700" },
     { name: "Restaurant", href: "/restaurant", icon: Utensils, color: "text-fuchsia-500", hoverBg: "hover:bg-fuchsia-50 hover:text-fuchsia-700" },
     { name: "Bar", href: "/bar", icon: Wine, color: "text-pink-500", hoverBg: "hover:bg-pink-50 hover:text-pink-700" },
+    { name: "Kitchen", href: "/kitchen", icon: ChefHat, color: "text-orange-500", hoverBg: "hover:bg-orange-50 hover:text-orange-700" },
     { name: "Housekeeping", href: "/housekeeping", icon: Brush, color: "text-indigo-500", hoverBg: "hover:bg-indigo-50 hover:text-indigo-700" },
     { name: "Billing", href: "/billing", icon: Receipt, color: "text-purple-500", hoverBg: "hover:bg-purple-50 hover:text-purple-700" },
     { name: "Expenses", href: "/expenses", icon: Calculator, color: "text-rose-500", hoverBg: "hover:bg-rose-50 hover:text-rose-700" },
