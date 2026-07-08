@@ -384,29 +384,59 @@ export async function generateInvoice(reservationId: string) {
 
     const basePrice = reservation.room.roomType.basePrice;
     const roomCharge = basePrice * nights;
+
+    // Fetch all RestOrders posted to this room that are not yet billed
+    const restOrders = await prisma.restOrder.findMany({
+      where: { tenantId, roomId: reservation.roomId, status: { not: "BILLED" } }
+    });
+    const restOrdersTotal = restOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+    // Fetch all BarOrders posted to this room that are not yet billed
+    const barOrders = await prisma.barOrder.findMany({
+      where: { tenantId, roomId: reservation.roomId, status: { not: "BILLED" } }
+    });
+    const barOrdersTotal = barOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     
     // Fixed 18% GST as per Phase 3 MVP assumption
-    const subTotal = roomCharge;
+    const subTotal = roomCharge + restOrdersTotal + barOrdersTotal;
     const gstAmount = subTotal * 0.18;
-    const discount = reservation.advancePayment; // We treat advance as a credit/discount to remaining balance for simplicity, or we can just subtract it from total. Actually let's just make totalAmount = subtotal + gst. We will record advancePayment as an already paid amount.
-    
     const totalAmount = subTotal + gstAmount;
     
     const invoiceNumber = `INV-${Date.now()}`;
 
-    const invoice = await prisma.invoice.create({
-      data: {
-        tenantId,
-        invoiceNumber,
-        reservationId: reservation.id,
-        guestName: `${reservation.guest.firstName} ${reservation.guest.lastName}`,
-        subTotal,
-        gstAmount,
-        discount: 0,
-        totalAmount,
-        paidAmount: reservation.advancePayment,
-        status: reservation.advancePayment >= totalAmount ? "PAID" : "UNPAID",
+    const invoice = await prisma.$transaction(async (tx) => {
+      const inv = await tx.invoice.create({
+        data: {
+          tenantId,
+          invoiceNumber,
+          reservationId: reservation.id,
+          guestName: `${reservation.guest.firstName} ${reservation.guest.lastName}`,
+          subTotal,
+          gstAmount,
+          discount: 0,
+          totalAmount,
+          paidAmount: reservation.advancePayment,
+          status: reservation.advancePayment >= totalAmount ? "PAID" : "UNPAID",
+        }
+      });
+
+      // Update and link restaurant orders
+      if (restOrders.length > 0) {
+        await tx.restOrder.updateMany({
+          where: { id: { in: restOrders.map(o => o.id) } },
+          data: { status: "BILLED", invoiceId: inv.id }
+        });
       }
+
+      // Update and link bar orders
+      if (barOrders.length > 0) {
+        await tx.barOrder.updateMany({
+          where: { id: { in: barOrders.map(o => o.id) } },
+          data: { status: "BILLED", invoiceId: inv.id }
+        });
+      }
+
+      return inv;
     });
 
     revalidatePath("/billing");
@@ -827,5 +857,191 @@ export async function billOrder(orderId: string) {
     return { success: true, data: result };
   } catch (error: any) {
     return { error: error.message || "Failed to bill order." };
+  }
+}
+
+// -----------------------------------------------------------------------------
+// BAR POS & INVENTORY
+// -----------------------------------------------------------------------------
+
+export async function getLiquorBrands() {
+  try {
+    const tenantId = await getTenantId();
+    const brands = await prisma.liquorBrand.findMany({
+      where: { tenantId },
+      include: { inventories: true },
+      orderBy: { name: "asc" }
+    });
+    return { success: true, data: brands };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch liquor brands." };
+  }
+}
+
+export async function createLiquorBrand(data: FormData) {
+  try {
+    const tenantId = await getTenantId();
+    const name = data.get("name") as string;
+    const type = data.get("type") as string;
+    const bottleSizeMl = parseInt(data.get("bottleSizeMl") as string);
+    const pegSizeMl = parseInt(data.get("pegSizeMl") as string || "30");
+    const pegPrice = parseFloat(data.get("pegPrice") as string || "0");
+    const bottlePrice = parseFloat(data.get("bottlePrice") as string);
+
+    if (!name || !type || isNaN(bottleSizeMl) || isNaN(bottlePrice)) {
+      return { error: "Name, type, bottle size, and bottle price are required." };
+    }
+
+    const brand = await prisma.$transaction(async (tx) => {
+      const b = await tx.liquorBrand.create({
+        data: {
+          tenantId,
+          name,
+          type,
+          bottleSizeMl,
+          pegSizeMl,
+          pegPrice,
+          bottlePrice,
+        }
+      });
+      // Initialize inventory
+      await tx.barInventory.create({
+        data: {
+          tenantId,
+          brandId: b.id,
+          bottlesStock: 0,
+          pegsStock: 0
+        }
+      });
+      return b;
+    });
+
+    revalidatePath("/bar");
+    return { success: true, data: brand };
+  } catch (error: any) {
+    return { error: error.message || "Failed to create liquor brand." };
+  }
+}
+
+export async function addBarStock(data: FormData) {
+  try {
+    const tenantId = await getTenantId();
+    const brandId = data.get("brandId") as string;
+    const bottlesToAdd = parseInt(data.get("bottles") as string || "0");
+    const pegsToAdd = parseInt(data.get("pegs") as string || "0");
+
+    if (!brandId || (bottlesToAdd === 0 && pegsToAdd === 0)) {
+      return { error: "Brand and stock amount are required." };
+    }
+
+    const inventory = await prisma.barInventory.findFirst({
+      where: { brandId, tenantId },
+      include: { brand: true }
+    });
+
+    if (!inventory) return { error: "Inventory not found." };
+
+    const pegsPerBottle = Math.floor(inventory.brand.bottleSizeMl / inventory.brand.pegSizeMl);
+
+    let newBottles = inventory.bottlesStock + bottlesToAdd;
+    let newPegs = inventory.pegsStock + pegsToAdd;
+
+    // Normalise pegs stock
+    if (newPegs >= pegsPerBottle) {
+      const extraBottles = Math.floor(newPegs / pegsPerBottle);
+      newBottles += extraBottles;
+      newPegs = newPegs % pegsPerBottle;
+    }
+
+    const updated = await prisma.barInventory.update({
+      where: { id: inventory.id },
+      data: {
+        bottlesStock: newBottles,
+        pegsStock: newPegs
+      }
+    });
+
+    revalidatePath("/bar");
+    return { success: true, data: updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update stock." };
+  }
+}
+
+export async function createBarOrder(data: any) {
+  try {
+    const tenantId = await getTenantId();
+    const { roomId, customerName, items } = data; // items: array of { brandId, saleType, quantity, price }
+
+    if (!items || items.length === 0) {
+      return { error: "No items in order." };
+    }
+
+    const totalAmount = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create order
+      const order = await tx.barOrder.create({
+        data: {
+          tenantId,
+          roomId: roomId || null,
+          customerName: customerName || null,
+          totalAmount,
+          status: roomId ? "SERVED" : "BILLED", // If room posting, it remains SERVED until checkout
+        }
+      });
+
+      // 2. Add items & deduct stock
+      for (const item of items) {
+        await tx.barOrderItem.create({
+          data: {
+            orderId: order.id,
+            brandId: item.brandId,
+            saleType: item.saleType,
+            quantity: item.quantity,
+            price: item.price
+          }
+        });
+
+        // Deduct inventory
+        const inventory = await tx.barInventory.findFirst({
+          where: { brandId: item.brandId, tenantId }
+        });
+        
+        if (inventory) {
+          const brand = await tx.liquorBrand.findUnique({ where: { id: item.brandId } });
+          if (!brand) throw new Error("Brand not found");
+          
+          const pegsPerBottle = Math.floor(brand.bottleSizeMl / brand.pegSizeMl);
+
+          let currentPegsTotal = (inventory.bottlesStock * pegsPerBottle) + inventory.pegsStock;
+          const pegsNeeded = item.saleType === "PEG" ? item.quantity : (item.quantity * pegsPerBottle);
+
+          if (currentPegsTotal < pegsNeeded) {
+            throw new Error(`Insufficient stock for ${brand.name}`);
+          }
+
+          const remainingPegsTotal = currentPegsTotal - pegsNeeded;
+          const newBottles = Math.floor(remainingPegsTotal / pegsPerBottle);
+          const newPegs = remainingPegsTotal % pegsPerBottle;
+
+          await tx.barInventory.update({
+            where: { id: inventory.id },
+            data: {
+              bottlesStock: newBottles,
+              pegsStock: newPegs
+            }
+          });
+        }
+      }
+
+      return order;
+    });
+
+    revalidatePath("/bar");
+    revalidatePath("/billing");
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { error: error.message || "Failed to place bar order." };
   }
 }

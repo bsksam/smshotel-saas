@@ -2,6 +2,8 @@ import { DoorOpen, CalendarCheck, Users, TrendingUp } from "lucide-react";
 import { getDashboardStats } from "@/actions/hotel";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function HotelDashboard() {
   const res = await getDashboardStats();
   const statsData = res.success ? res.data : {

@@ -43,7 +43,7 @@ export default function BillingPage() {
       if (res.error) {
         setError(res.error);
         alert(res.error);
-      } else {
+      } else if (res.data) {
         setSelectedInvoice(res.data);
         // Pre-fill amount with remaining balance
         const balance = res.data.totalAmount - res.data.paidAmount;
