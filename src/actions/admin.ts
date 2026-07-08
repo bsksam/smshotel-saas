@@ -169,3 +169,50 @@ export async function getUsers() {
     return { error: "Failed to fetch users." };
   }
 }
+
+// -----------------------------------------------------------------------------
+// SYSTEM CONFIGURATION (SUPER ADMIN)
+// -----------------------------------------------------------------------------
+
+import fs from "fs";
+import path from "path";
+
+const SETTINGS_FILE = path.join(process.cwd(), "src/data/system-settings.json");
+
+export async function getSystemSettings() {
+  try {
+    if (!fs.existsSync(SETTINGS_FILE)) {
+      const defaultSettings = {
+        smsProvider: "Fast2SMS",
+        smsApiKey: "",
+        smsSenderId: "SMSHTL",
+        emailProvider: "SendGrid",
+        emailApiKey: ""
+      };
+      const dir = path.dirname(SETTINGS_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(defaultSettings, null, 2));
+      return { success: true, data: defaultSettings };
+    }
+    const raw = fs.readFileSync(SETTINGS_FILE, "utf-8");
+    return { success: true, data: JSON.parse(raw) };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch settings." };
+  }
+}
+
+export async function saveSystemSettings(data: any) {
+  try {
+    const dir = path.dirname(SETTINGS_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2));
+    revalidatePath("/admin/settings");
+    return { success: true, data };
+  } catch (error: any) {
+    return { error: error.message || "Failed to save settings." };
+  }
+}
