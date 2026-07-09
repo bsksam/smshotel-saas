@@ -50,7 +50,7 @@ export async function HotelSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-white to-zinc-50 border-r border-zinc-200 h-screen flex flex-col fixed top-0 left-0 shadow-sm">
+    <aside className="w-64 bg-gradient-to-b from-white to-zinc-50 border-r border-zinc-200 h-full flex flex-col shadow-sm">
       <div className="h-16 flex items-center px-6 border-b border-zinc-200/60">
         <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-3 shadow-md shadow-indigo-100">
           <span className="text-white font-extrabold text-sm tracking-tighter">{tenantInitials}</span>
