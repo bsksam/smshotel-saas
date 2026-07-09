@@ -10,10 +10,10 @@ export function Header() {
   return (
     <header className="h-16 bg-white/60 backdrop-blur-md border-b border-zinc-200/60 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
       <div className="flex items-center gap-2 md:gap-4 flex-1">
-        {/* Hamburger Menu Toggle Button */}
+        {/* Hamburger Menu Toggle Button for both Mobile and Desktop */}
         <button 
           onClick={triggerMobileMenu}
-          className="md:hidden p-2 rounded-xl border border-zinc-200 bg-white text-zinc-650 hover:bg-zinc-50 shadow-sm"
+          className="p-2 rounded-xl border border-zinc-200 bg-white text-zinc-650 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shadow-sm"
           aria-label="Toggle Sidebar Menu"
         >
           <Menu className="w-4.5 h-4.5" />

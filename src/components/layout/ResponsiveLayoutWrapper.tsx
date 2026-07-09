@@ -10,15 +10,24 @@ export function ResponsiveLayoutWrapper({
   sidebar: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
 
-  // Close sidebar drawer automatically on route navigation
+  // Set initial sidebar state on mount depending on viewport size
   useEffect(() => {
-    setSidebarOpen(false);
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, []);
+
+  // Close sidebar drawer automatically on route navigation only on mobile
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
   }, [pathname]);
 
-  // Listen for mobile toggle click event from Header
+  // Listen for toggle click event from Header
   useEffect(() => {
     const handleToggle = () => setSidebarOpen(prev => !prev);
     window.addEventListener("toggle-sidebar", handleToggle);
@@ -36,14 +45,16 @@ export function ResponsiveLayoutWrapper({
       )}
       
       {/* Sidebar container */}
-      <div className={`fixed z-50 md:z-30 transition-transform duration-300 ease-in-out md:translate-x-0 h-screen top-0 left-0 ${
+      <div className={`fixed z-50 md:z-30 transition-transform duration-300 ease-in-out h-screen top-0 left-0 ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         {sidebar}
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 md:ml-64 flex flex-col min-w-0 transition-all duration-300">
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+        sidebarOpen ? "md:pl-64" : "pl-0"
+      }`}>
         {children}
       </div>
     </div>
