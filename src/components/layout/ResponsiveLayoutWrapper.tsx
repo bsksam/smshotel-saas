@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { X } from "lucide-react";
 
 export function ResponsiveLayoutWrapper({
   sidebar,
@@ -10,12 +11,14 @@ export function ResponsiveLayoutWrapper({
   sidebar: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
   // Set initial sidebar state on mount depending on viewport size
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setSidebarOpen(true);
+    } else {
       setSidebarOpen(false);
     }
   }, []);
@@ -49,6 +52,17 @@ export function ResponsiveLayoutWrapper({
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         {sidebar}
+        
+        {/* Mobile close button inside the sidebar container */}
+        {sidebarOpen && (
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="absolute top-3.5 right-4 md:hidden p-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-650 hover:bg-zinc-50 shadow-sm z-50"
+            aria-label="Close sidebar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
       
       {/* Main Content Area */}
