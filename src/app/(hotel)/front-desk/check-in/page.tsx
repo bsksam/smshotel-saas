@@ -140,7 +140,7 @@ export default function CheckInPage() {
                         <div className="flex justify-between items-center w-full">
                           <div>
                             <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Advance Paid</p>
-                            <p className="font-bold text-emerald-600 font-mono">${res.advancePayment}</p>
+                            <p className="font-bold text-emerald-600 font-mono">₹{res.advancePayment}</p>
                           </div>
                         </div>
                       </div>

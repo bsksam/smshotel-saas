@@ -211,7 +211,7 @@ export default function ReservationsPage() {
                     <input required name="adults" type="number" min="1" defaultValue="1" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white" />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Advance Payment ($)</label>
+                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Advance Payment (₹)</label>
                     <input name="advancePayment" type="number" min="0" step="0.01" defaultValue="0" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white font-mono" />
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Loader2, DollarSign, X } from "lucide-react";
+import { Plus, Search, Loader2, IndianRupee, X } from "lucide-react";
 import { getExpenses, addExpense, getExpenseCategories, addExpenseCategory } from "@/actions/hotel";
 
 export default function ExpensesPage() {
@@ -90,7 +90,7 @@ export default function ExpensesPage() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-            <DollarSign className="w-6 h-6 text-rose-500 animate-pulse" />
+            <IndianRupee className="w-6 h-6 text-rose-500 animate-pulse" />
             Expenses Ledger
           </h2>
           <p className="text-zinc-500 mt-1 text-sm">Track money out: salaries, supplies, and maintenance.</p>
@@ -117,10 +117,10 @@ export default function ExpensesPage() {
           <div className="absolute right-0 top-0 -mr-10 -mt-10 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest opacity-85 mb-1">Total Expenses (All Time)</p>
-            <p className="text-3xl font-extrabold tracking-tight font-mono">${totalExpenses.toFixed(2)}</p>
+            <p className="text-3xl font-extrabold tracking-tight font-mono">₹{totalExpenses.toFixed(2)}</p>
           </div>
           <div className="p-3 rounded-2xl bg-white/10 border border-white/10">
-            <DollarSign className="w-6 h-6" />
+            <IndianRupee className="w-6 h-6" />
           </div>
         </div>
         
@@ -152,7 +152,7 @@ export default function ExpensesPage() {
           ) : filteredExpenses.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-zinc-500 gap-3">
               <div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mb-2">
-                <DollarSign className="w-5 h-5 text-zinc-400" />
+                <IndianRupee className="w-5 h-5 text-zinc-400" />
               </div>
               <p className="text-sm font-bold text-zinc-800">No expenses recorded yet.</p>
             </div>
@@ -179,7 +179,7 @@ export default function ExpensesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right font-extrabold text-red-600 font-mono text-base">
-                      -${exp.amount.toFixed(2)}
+                      -₹{exp.amount.toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -216,7 +216,7 @@ export default function ExpensesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Amount ($)</label>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Amount (₹)</label>
                   <input required name="amount" type="number" step="0.01" placeholder="0.00" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white font-mono" />
                 </div>
                 <div>

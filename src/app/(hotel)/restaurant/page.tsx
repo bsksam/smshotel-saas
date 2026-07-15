@@ -185,7 +185,7 @@ export default function RestaurantPOS() {
                         {order.items.map((item: any) => (
                           <div key={item.id} className="flex justify-between text-sm">
                             <span className="text-zinc-755 font-medium"><span className="text-zinc-400 mr-1">{item.quantity}x</span> {item.menuItem?.name}</span>
-                            <span className="font-mono font-bold text-zinc-900">${(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="font-mono font-bold text-zinc-900">₹{(item.price * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
@@ -195,7 +195,7 @@ export default function RestaurantPOS() {
                   <div className="p-3 border-t border-zinc-200 bg-white space-y-3">
                     <div className="flex justify-between font-bold text-zinc-900">
                       <span>Total</span>
-                      <span className="font-mono text-base">${order.totalAmount.toFixed(2)}</span>
+                      <span className="font-mono text-base">₹{order.totalAmount.toFixed(2)}</span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2">
@@ -275,7 +275,7 @@ export default function RestaurantPOS() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Price ($)</label>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Price (₹)</label>
                   <input required name="price" type="number" step="0.01" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white font-mono" />
                 </div>
                 <div>
@@ -319,7 +319,7 @@ export default function RestaurantPOS() {
                             {item.isVeg ? 'Veg' : 'Non-Veg'}
                           </p>
                         </div>
-                        <span className="font-bold text-zinc-900">${item.price.toFixed(2)}</span>
+                        <span className="font-bold text-zinc-900">₹{item.price.toFixed(2)}</span>
                       </button>
                     ))}
                   </div>

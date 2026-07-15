@@ -166,7 +166,7 @@ export default async function HotelDashboard() {
                       }`}>
                         {booking.status}
                       </span>
-                      <p className="text-xs text-zinc-500 mt-1.5 font-mono font-bold">${booking.advancePayment} paid</p>
+                      <p className="text-xs text-zinc-500 mt-1.5 font-mono font-bold">₹{booking.advancePayment} paid</p>
                     </div>
                   </div>
                 );

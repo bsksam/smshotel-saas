@@ -282,7 +282,7 @@ export default function BarPOS() {
                         className="flex flex-col items-center justify-center p-2 rounded-xl bg-indigo-50/20 border border-indigo-150 text-indigo-700 hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 hover:text-white transition-all group"
                       >
                         <span className="text-[10px] text-indigo-500 font-semibold group-hover:text-indigo-100">Peg ({brand.pegSizeMl}ml)</span>
-                        <span className="text-sm font-bold text-indigo-700 group-hover:text-white">${brand.pegPrice.toFixed(2)}</span>
+                        <span className="text-sm font-bold text-indigo-700 group-hover:text-white">₹{brand.pegPrice.toFixed(2)}</span>
                       </button>
                     )}
                     <button 
@@ -290,7 +290,7 @@ export default function BarPOS() {
                       className={`${!hasPegOption ? 'col-span-2' : ''} flex flex-col items-center justify-center p-2 rounded-xl bg-indigo-50/20 border border-indigo-150 text-indigo-700 hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 hover:text-white transition-all group`}
                     >
                       <span className="text-[10px] text-indigo-500 font-semibold group-hover:text-indigo-100">Full Bottle</span>
-                      <span className="text-sm font-bold text-indigo-700 group-hover:text-white">${brand.bottlePrice.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-indigo-700 group-hover:text-white">₹{brand.bottlePrice.toFixed(2)}</span>
                     </button>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export default function BarPOS() {
               <div key={item.key} className="flex justify-between items-center border-b border-zinc-100 pb-3">
                 <div className="max-w-[140px]">
                   <p className="font-bold text-zinc-900 text-xs truncate">{item.name}</p>
-                  <p className="text-[10px] text-zinc-500 font-semibold">{item.saleType} @ ${item.price.toFixed(2)}</p>
+                  <p className="text-[10px] text-zinc-500 font-semibold">{item.saleType} @ ₹{item.price.toFixed(2)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
@@ -382,7 +382,7 @@ export default function BarPOS() {
                       <PlusCircle className="w-4 h-4" />
                     </button>
                   </div>
-                  <p className="font-mono font-bold text-zinc-900 text-xs w-14 text-right">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-mono font-bold text-zinc-900 text-xs w-14 text-right">₹{(item.price * item.quantity).toFixed(2)}</p>
                   <button 
                     onClick={() => removeFromCart(item.key)}
                     className="text-zinc-400 hover:text-rose-650 transition-colors"
@@ -398,15 +398,15 @@ export default function BarPOS() {
         <div className="p-4 bg-zinc-50/50 border-t border-zinc-200/60 space-y-3">
           <div className="flex justify-between text-xs text-zinc-500 font-semibold">
             <span>Subtotal</span>
-            <span className="font-mono text-zinc-700 font-bold">${getSubtotal().toFixed(2)}</span>
+            <span className="font-mono text-zinc-700 font-bold">₹{getSubtotal().toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-xs text-zinc-500 font-semibold">
             <span>VAT (20%)</span>
-            <span className="font-mono text-zinc-700 font-bold">${getTax().toFixed(2)}</span>
+            <span className="font-mono text-zinc-700 font-bold">₹{getTax().toFixed(2)}</span>
           </div>
           <div className="pt-3 border-t border-zinc-200 flex justify-between items-center">
             <span className="font-bold text-zinc-900 text-sm">Total</span>
-            <span className="font-mono font-extrabold text-xl text-zinc-900">${getTotal().toFixed(2)}</span>
+            <span className="font-mono font-extrabold text-xl text-zinc-900">₹{getTotal().toFixed(2)}</span>
           </div>
           
           <button 
@@ -461,11 +461,11 @@ export default function BarPOS() {
                   <input required name="pegSizeMl" type="number" defaultValue="30" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Peg Price ($)</label>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Peg Price (₹)</label>
                   <input name="pegPrice" type="number" step="0.01" defaultValue="8" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-mono" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Bottle Price ($)</label>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Bottle Price (₹)</label>
                   <input required name="bottlePrice" type="number" step="0.01" placeholder="120" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-mono" />
                 </div>
               </div>

@@ -266,7 +266,7 @@ export default function RoomsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Base Price ($)</label>
+                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Base Price (₹)</label>
                     <input required name="basePrice" type="number" step="0.01" placeholder="99.99" className="w-full px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 text-sm bg-white font-mono" />
                   </div>
                   <div>

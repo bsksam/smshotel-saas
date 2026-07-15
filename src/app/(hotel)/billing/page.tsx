@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Receipt, CheckCircle, ChevronRight, Loader2, X, DollarSign } from "lucide-react";
+import { Search, Receipt, CheckCircle, ChevronRight, Loader2, X, IndianRupee } from "lucide-react";
 import { getCheckedInGuests, generateInvoice, recordPayment } from "@/actions/hotel";
 
 export default function BillingPage() {
@@ -195,28 +195,28 @@ export default function BillingPage() {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between text-zinc-650 font-medium">
                     <span>Operational Room Charges (Subtotal)</span>
-                    <span className="font-mono font-bold">${selectedInvoice.subTotal.toFixed(2)}</span>
+                    <span className="font-mono font-bold">₹{selectedInvoice.subTotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-zinc-650 font-medium">
                     <span>GST (18%)</span>
-                    <span className="font-mono font-bold">${selectedInvoice.gstAmount.toFixed(2)}</span>
+                    <span className="font-mono font-bold">₹{selectedInvoice.gstAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-zinc-900 font-bold pt-3 border-t border-indigo-200/60">
                     <span>Total Bill Amount</span>
-                    <span className="font-mono text-base">${selectedInvoice.totalAmount.toFixed(2)}</span>
+                    <span className="font-mono text-base">₹{selectedInvoice.totalAmount.toFixed(2)}</span>
                   </div>
                   
                   {selectedInvoice.paidAmount > 0 && (
                     <div className="flex justify-between text-emerald-600 font-bold">
                       <span>Already Paid (Advance)</span>
-                      <span className="font-mono">-${selectedInvoice.paidAmount.toFixed(2)}</span>
+                      <span className="font-mono">-₹{selectedInvoice.paidAmount.toFixed(2)}</span>
                     </div>
                   )}
                   
                   <div className="flex justify-between text-rose-700 bg-rose-50 border border-rose-200/60 p-3 rounded-xl font-bold text-lg pt-3 border-t border-zinc-900 mt-2">
                     <span>Balance Due</span>
                     <span className="font-mono">
-                      ${Math.max(0, selectedInvoice.totalAmount - selectedInvoice.paidAmount).toFixed(2)}
+                      ₹{Math.max(0, selectedInvoice.totalAmount - selectedInvoice.paidAmount).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -254,9 +254,9 @@ export default function BillingPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Amount to Pay ($)</label>
+                      <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Amount to Pay (₹)</label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input 
                           type="number"
                           step="0.01"
